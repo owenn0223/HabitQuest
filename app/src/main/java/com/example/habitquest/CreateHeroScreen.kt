@@ -1,0 +1,451 @@
+package com.example.habitquest
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.example.habitquest.ui.theme.HabitQuestTheme
+
+@Composable
+fun CreateHeroScreen(onBackClick: () -> Unit = {}) {
+    val heroName = remember { mutableStateOf("") }
+    val emailAddress = remember { mutableStateOf("") }
+    val password = remember { mutableStateOf("") }
+    val showPassword = remember { mutableStateOf(false) }
+    val selectedClass = remember { mutableStateOf("Warrior") }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFF1a3a2a)) // Fondo verde oscuro
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        // HEADER CON BOTÓN ATRÁS
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 16.dp, bottom = 24.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            // 📍 BOTÓN ATRÁS - REEMPLAZAR CON ICONO
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clickable { onBackClick() },
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "←",
+                    fontSize = 24.sp,
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            Text(
+                text = "Create Hero",
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White,
+                modifier = Modifier.weight(1f),
+                textAlign = TextAlign.Center
+            )
+
+            // Espacio para balancear
+            Spacer(modifier = Modifier.size(40.dp))
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // AVATAR CÍRCULO CON EFECTO DE SOMBRA
+        Box(
+            modifier = Modifier.size(160.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            // Círculo externo (efecto de sombra/gradiente)
+            Box(
+                modifier = Modifier
+                    .size(160.dp)
+                    .border(
+                        width = 6.dp,
+                        color = Color(0xFFB8956A), // Color beige/marrón para sombra
+                        shape = CircleShape
+                    )
+                    .background(
+                        color = Color(0xFF00FF88),
+                        shape = CircleShape
+                    )
+                    .clip(CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                // Círculo blanco interior
+                Box(
+                    modifier = Modifier
+                        .size(120.dp)
+                        .background(Color.White, shape = CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "👤",
+                        fontSize = 60.sp
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // TEXTO "TAP TO UPLOAD"
+        Text(
+            text = "Tap to upload",
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color.White,
+            textAlign = TextAlign.Center
+        )
+
+        Spacer(modifier = Modifier.height(2.dp))
+
+        // SUBTÍTULO VERDE
+        Text(
+            text = "Set your hero appearance",
+            fontSize = 14.sp,
+            color = Color(0xFF00FF88),
+            textAlign = TextAlign.Center
+        )
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        // HERO NAME LABEL
+        Text(
+            text = "Hero Name",
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color.White,
+            modifier = Modifier.align(Alignment.Start)
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // HERO NAME INPUT
+        OutlinedTextField(
+            value = heroName.value,
+            onValueChange = { heroName.value = it },
+            placeholder = {
+                Text(
+                    text = "Ex: Arthur Pendragon",
+                    color = Color(0xFF666666),
+                    fontSize = 14.sp
+                )
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = Color(0xFF00FF88),
+                unfocusedBorderColor = Color(0xFF00AA66),
+                focusedTextColor = Color.White,
+                unfocusedTextColor = Color(0xFFCCCCCC)
+            ),
+            shape = RoundedCornerShape(14.dp),
+            singleLine = true
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // EMAIL ADDRESS LABEL
+        Text(
+            text = "Email Address",
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color.White,
+            modifier = Modifier.align(Alignment.Start)
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // EMAIL ADDRESS INPUT
+        OutlinedTextField(
+            value = emailAddress.value,
+            onValueChange = { emailAddress.value = it },
+            placeholder = {
+                Text(
+                    text = "email@example.com",
+                    color = Color(0xFF666666),
+                    fontSize = 14.sp
+                )
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = Color(0xFF00FF88),
+                unfocusedBorderColor = Color(0xFF00AA66),
+                focusedTextColor = Color.White,
+                unfocusedTextColor = Color(0xFFCCCCCC)
+            ),
+            shape = RoundedCornerShape(14.dp),
+            singleLine = true
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // SECRET PASSWORD LABEL
+        Text(
+            text = "Secret Password",
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color.White,
+            modifier = Modifier.align(Alignment.Start)
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // SECRET PASSWORD INPUT
+        OutlinedTextField(
+            value = password.value,
+            onValueChange = { password.value = it },
+            placeholder = {
+                Text(
+                    text = "••••••••",
+                    color = Color(0xFF666666),
+                    fontSize = 14.sp
+                )
+            },
+            visualTransformation = if (showPassword.value) {
+                VisualTransformation.None
+            } else {
+                PasswordVisualTransformation()
+            },
+            trailingIcon = {
+                // 📍 ICONO DE OJO/VISIBILIDAD - Reemplazar con Icon real
+                Box(
+                    modifier = Modifier
+                        .size(24.dp)
+                        .clickable { showPassword.value = !showPassword.value },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = if (showPassword.value) "👁️" else "🚫",
+                        fontSize = 18.sp
+                    )
+                }
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = Color(0xFF00FF88),
+                unfocusedBorderColor = Color(0xFF00AA66),
+                focusedTextColor = Color.White,
+                unfocusedTextColor = Color(0xFFCCCCCC)
+            ),
+            shape = RoundedCornerShape(14.dp),
+            singleLine = true
+        )
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        // CHOOSE YOUR CLASS LABEL
+        Text(
+            text = "CHOOSE YOUR CLASS",
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color.White,
+            modifier = Modifier.align(Alignment.Start),
+            letterSpacing = 1.sp
+        )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // CLASES EN FILA
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            // WARRIOR CLASS
+            ClassCard(
+                name = "Warrior",
+                icon = "⚔️", // 📍 REEMPLAZAR CON ICONO REAL
+                isSelected = selectedClass.value == "Warrior",
+                onClick = { selectedClass.value = "Warrior" },
+                modifier = Modifier.weight(1f)
+            )
+
+            // MAGE CLASS
+            ClassCard(
+                name = "Mage",
+                icon = "🔮", // 📍 REEMPLAZAR CON ICONO REAL
+                isSelected = selectedClass.value == "Mage",
+                onClick = { selectedClass.value = "Mage" },
+                modifier = Modifier.weight(1f)
+            )
+
+            // SAGE CLASS
+            ClassCard(
+                name = "Sage",
+                icon = "📖", // 📍 REEMPLAZAR CON ICONO REAL
+                isSelected = selectedClass.value == "Sage",
+                onClick = { selectedClass.value = "Sage" },
+                modifier = Modifier.weight(1f)
+            )
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // BOTÓN CREATE ACCOUNT
+        Button(
+            onClick = { /* TODO: Crear cuenta */ },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color(0xFF00FF88)
+            ),
+            shape = RoundedCornerShape(16.dp)
+        ) {
+            Text(
+                text = "Create Account",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF1a3a2a)
+            )
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // LINK LOGIN
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 20.dp),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Already have an account? ",
+                fontSize = 14.sp,
+                color = Color(0xFF999999)
+            )
+            Text(
+                text = "Login",
+                fontSize = 14.sp,
+                color = Color(0xFF00FF88),
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.clickable { /* TODO: Navegar a Login */ }
+            )
+        }
+
+        Spacer(modifier = Modifier.height(20.dp))
+    }
+}
+
+@Composable
+fun ClassCard(
+    name: String,
+    icon: String,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier
+            .border(
+                width = if (isSelected) 3.dp else 2.dp,
+                color = if (isSelected) Color(0xFF00FF88) else Color(0xFF00AA66),
+                shape = RoundedCornerShape(16.dp)
+            )
+            .background(
+                color = Color(0xFF0d6b4f),
+                shape = RoundedCornerShape(16.dp)
+            )
+            .clickable { onClick() }
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        // ICONO CLASE
+        Box(
+            modifier = Modifier
+                .size(60.dp)
+                .background(
+                    color = Color(0xFF053d2e),
+                    shape = CircleShape
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = icon,
+                fontSize = 36.sp
+            )
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // NOMBRE CLASE
+        Text(
+            text = name,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color.White,
+            textAlign = TextAlign.Center
+        )
+
+        // LÍNEA VERDE DEBAJO SI ESTÁ SELECCIONADA
+        if (isSelected) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(3.dp)
+                    .background(Color(0xFF00FF88), shape = RoundedCornerShape(2.dp))
+            )
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun CreateHeroScreenPreview() {
+    HabitQuestTheme {
+        CreateHeroScreen()
+    }
+}
+

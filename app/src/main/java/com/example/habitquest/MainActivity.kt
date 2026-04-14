@@ -48,7 +48,11 @@ class MainActivity : ComponentActivity() {
 enum class Screen {
     WELCOME,
     CREATE_HERO,
-    LOGIN
+    LOGIN,
+    DASHBOARD,
+    CREATE_HABIT,
+    HABITS_LIST,
+    ACHIEVEMENTS // Nueva pantalla
 }
 
 @Composable
@@ -64,7 +68,24 @@ fun AppNavigation() {
             onBackClick = { currentScreen.value = Screen.WELCOME }
         )
         Screen.LOGIN -> LoginScreen(
-            onBackClick = { currentScreen.value = Screen.WELCOME }
+            onBackClick = { currentScreen.value = Screen.WELCOME },
+            onLoginSuccess = { currentScreen.value = Screen.DASHBOARD },
+            onCreateCharacterClick = { currentScreen.value = Screen.CREATE_HERO }
+        )
+        Screen.DASHBOARD -> DashboardScreen(
+            onCreateHabitClick = { currentScreen.value = Screen.CREATE_HABIT },
+            onHabitsListClick = { currentScreen.value = Screen.HABITS_LIST }
+        )
+        Screen.CREATE_HABIT -> CreateHabitScreen(
+            onBack = { currentScreen.value = Screen.DASHBOARD }
+        )
+        Screen.HABITS_LIST -> HabitsListScreen(
+            onBack = { currentScreen.value = Screen.DASHBOARD },
+            onCreateHabit = { currentScreen.value = Screen.CREATE_HABIT },
+            onAchievementsClick = { currentScreen.value = Screen.ACHIEVEMENTS }
+        )
+        Screen.ACHIEVEMENTS -> AchievementsScreen(
+            onBack = { currentScreen.value = Screen.DASHBOARD }
         )
     }
 }
@@ -181,7 +202,7 @@ fun WelcomeScreen(
             )
         }
 
-        Spacer(modifier = Modifier.height(80.dp))
+        Spacer(modifier = Modifier.height(64.dp))
 
         // VERSIÓN (En la parte inferior)
         Text(
@@ -194,6 +215,7 @@ fun WelcomeScreen(
         Spacer(modifier = Modifier.height(20.dp))
     }
 }
+
 
 @Preview(showBackground = true)
 @Composable

@@ -31,13 +31,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.habitquest.ui.theme.HabitQuestTheme
 
 @Composable
-fun LoginScreen(onBackClick: () -> Unit = {}) {
+fun LoginScreen(
+    onBackClick: () -> Unit = {},
+    onLoginSuccess: () -> Unit = {},
+    onCreateCharacterClick: () -> Unit = {}
+) {
     val emailAddress = remember { mutableStateOf("") }
     val password = remember { mutableStateOf("") }
     val showPassword = remember { mutableStateOf(false) }
@@ -45,7 +47,7 @@ fun LoginScreen(onBackClick: () -> Unit = {}) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF1a3a2a)) // Fondo verde oscuro
+            .background(Color(0xFF1a3a2a))
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
@@ -58,7 +60,6 @@ fun LoginScreen(onBackClick: () -> Unit = {}) {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            // 📍 BOTÓN ATRÁS - REEMPLAZAR CON ICONO
             Box(
                 modifier = Modifier
                     .size(40.dp)
@@ -82,7 +83,6 @@ fun LoginScreen(onBackClick: () -> Unit = {}) {
                 textAlign = TextAlign.Center
             )
 
-            // Espacio para balancear
             Spacer(modifier = Modifier.size(40.dp))
         }
 
@@ -163,7 +163,6 @@ fun LoginScreen(onBackClick: () -> Unit = {}) {
                 )
             },
             leadingIcon = {
-                // 📍 ICONO DE EMAIL - Reemplazar con Icon real
                 Box(
                     modifier = Modifier.size(24.dp),
                     contentAlignment = Alignment.Center
@@ -217,7 +216,6 @@ fun LoginScreen(onBackClick: () -> Unit = {}) {
                 PasswordVisualTransformation()
             },
             leadingIcon = {
-                // 📍 ICONO DE CANDADO - Reemplazar con Icon real
                 Box(
                     modifier = Modifier.size(24.dp),
                     contentAlignment = Alignment.Center
@@ -229,7 +227,6 @@ fun LoginScreen(onBackClick: () -> Unit = {}) {
                 }
             },
             trailingIcon = {
-                // 📍 ICONO DE OJO/VISIBILIDAD - Reemplazar con Icon real
                 Box(
                     modifier = Modifier
                         .size(24.dp)
@@ -272,7 +269,7 @@ fun LoginScreen(onBackClick: () -> Unit = {}) {
 
         // BOTÓN LOG IN
         Button(
-            onClick = { /* TODO: Validar y hacer login */ },
+            onClick = { onLoginSuccess() },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp),
@@ -308,92 +305,11 @@ fun LoginScreen(onBackClick: () -> Unit = {}) {
                 fontSize = 14.sp,
                 color = Color(0xFF00FF88),
                 fontWeight = FontWeight.Bold,
-                modifier = Modifier.clickable { /* TODO: Navegar a Sign Up */ }
+                modifier = Modifier.clickable { onCreateCharacterClick() }
             )
         }
 
         Spacer(modifier = Modifier.height(40.dp))
-
-        // NAVIGATION BAR (Footer)
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 16.dp)
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(1.dp)
-                    .background(Color(0xFF333333))
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceAround,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                // 📍 HOME ICON
-                Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clickable { /* TODO: Navegar a Home */ },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(text = "🏠", fontSize = 24.sp)
-                }
-
-                // 📍 HABITS ICON
-                Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clickable { /* TODO: Navegar a Habits */ },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(text = "⚔️", fontSize = 24.sp)
-                }
-
-                // 📍 TASKS ICON
-                Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clickable { /* TODO: Navegar a Tasks */ },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(text = "☰", fontSize = 24.sp)
-                }
-
-                // 📍 STATS ICON
-                Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clickable { /* TODO: Navegar a Stats */ },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(text = "📊", fontSize = 24.sp)
-                }
-
-                // 📍 PROFILE ICON
-                Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clickable { /* TODO: Navegar a Profile */ },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(text = "👤", fontSize = 24.sp)
-                }
-            }
-        }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun LoginScreenPreview() {
-    HabitQuestTheme {
-        LoginScreen()
     }
 }
 

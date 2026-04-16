@@ -1,5 +1,7 @@
 package com.example.habitquest.model
 
+import androidx.room.Entity
+import androidx.room.PrimaryKey
 import java.io.Serializable
 
 /**
@@ -8,6 +10,8 @@ import java.io.Serializable
  * CAMPOS ACADÉMICOS REQUERIDOS:
  * - id: Identificador único
  * - nombre: Nombre del personaje
+ * - correo: Correo electrónico para login
+ * - contraseña: Contraseña para login
  * - clase: Tipo de personaje (Warrior, Mage, Sage, Adventurer)
  * - nivelActual: Nivel actual del personaje
  * - xpActual: XP acumulado en el nivel actual
@@ -15,9 +19,13 @@ import java.io.Serializable
  * - rachaActual: Días consecutivos completando hábitos
  */
 
+@Entity(tableName = "usuario")
 data class Usuario(
-    val id: Int = 1, // En esta app solo tendremos 1 usuario
+    @PrimaryKey(autoGenerate = true)
+    val id: Int = 0,
     val nombre: String,
+    val correo: String,
+    val contraseña: String,
     val clase: String, // "WARRIOR", "MAGE", "SAGE", "ADVENTURER"
     val nivelActual: Int = 1,
     val xpActual: Int = 0, // XP dentro del nivel actual (0-100)
@@ -60,4 +68,3 @@ data class Usuario(
  *
  *    Esto es lo que hace el sistema "RPG real"
  */
-

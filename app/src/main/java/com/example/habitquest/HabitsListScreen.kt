@@ -4,16 +4,19 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -21,9 +24,15 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.habitquest.model.Habit
+import com.example.habitquest.ui.theme.HabitQuestTheme
+import com.example.habitquest.viewmodel.HabitsListViewModel
+import androidx.compose.runtime.mutableStateOf
+
 
 @Composable
 fun HabitsListScreen(
@@ -31,7 +40,17 @@ fun HabitsListScreen(
     onCreateHabit: () -> Unit = {},
     onAchievementsClick: () -> Unit = {}
 ) {
-    val selectedFilter = remember { mutableStateOf("All") }
+    // VIEWMODEL - Conectar con Room Database
+    val viewModel: HabitsListViewModel = viewModel()
+    val habits by viewModel.habits.collectAsState()
+    val currentFilter by viewModel.currentFilter.collectAsState()
+    val remainingHabits by viewModel.remainingHabits.collectAsState()
+
+    // Estado para diálogo de confirmación de eliminación
+    val showDeleteDialog = remember { mutableStateOf(false) }
+    val habitToDelete = remember { mutableStateOf<Habit?>(null) }
+
+    // Estado local para filtros (temporal, luego se moverá a ViewModel)
     val filters = listOf("All", "Daily", "Weekly", "Monthly")
 
     Column(
@@ -84,16 +103,16 @@ fun HabitsListScreen(
                     modifier = Modifier
                         .clip(RoundedCornerShape(8.dp))
                         .background(
-                            if (selectedFilter.value == filter) Color(0xFF00FF88)
+                            if (currentFilter == filter) Color(0xFF00FF88)
                             else Color(0xFF203c2e)
                         )
-                        .clickable { selectedFilter.value = filter }
+                        .clickable { viewModel.setFilter(filter) }
                         .padding(horizontal = 12.dp, vertical = 8.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
                         text = filter,
-                        color = if (selectedFilter.value == filter) Color(0xFF1a3a2a) else Color.White,
+                        color = if (currentFilter == filter) Color(0xFF1a3a2a) else Color.White,
                         fontWeight = FontWeight.Bold,
                         fontSize = 13.sp
                     )
@@ -116,10 +135,21 @@ fun HabitsListScreen(
                 fontSize = 14.sp
             )
             Text(
-                text = "4 Remaining",
+                text = "${remainingHabits} Remaining",
                 color = Color(0xFF999999),
                 fontSize = 12.sp
             )
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // BOTÓN TEMPORAL PARA AGREGAR HÁBITOS DE PRUEBA
+        Button(
+            onClick = { viewModel.addSampleHabits() },
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0088FF))
+        ) {
+            Text("Agregar Hábitos de Prueba", color = Color.White)
         }
 
         Spacer(modifier = Modifier.height(12.dp))
@@ -129,33 +159,14 @@ fun HabitsListScreen(
             modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            items(4) { index ->
+            items(habits) { habit ->
                 HabitCard(
-                    habitName = when (index) {
-                        0 -> "Morning Meditation"
-                        1 -> "Heavy Lifting Session"
-                        2 -> "Drink 2L Water"
-                        else -> "Read 20 Pages"
-                    },
-                    frequency = when (index) {
-                        0 -> "DAILY"
-                        1 -> "WEEKLY"
-                        2 -> "DAILY"
-                        else -> "DAILY"
-                    },
-                    difficulty = when (index) {
-                        0 -> "EASY"
-                        1 -> "HARD"
-                        2 -> "EASY"
-                        else -> "MED"
-                    },
-                    xp = when (index) {
-                        0 -> "50 XP"
-                        1 -> "250 XP"
-                        2 -> "25 XP"
-                        else -> "100 XP"
-                    },
-                    isCompleted = index == 3
+                    habit = habit,
+                    onCompleteClick = { viewModel.toggleHabitCompletion(habit.id) },
+                    onDeleteClick = {
+                        habitToDelete.value = habit
+                        showDeleteDialog.value = true
+                    }
                 )
             }
         }
@@ -191,7 +202,7 @@ fun HabitsListScreen(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(onClick = { /* TODO: Dashboard */ }) {
+            IconButton(onClick = { onBack() }) {
                 Text("🏠", fontSize = 26.sp)
             }
             IconButton(onClick = { /* TODO: Quests */ }) {
@@ -217,16 +228,39 @@ fun HabitsListScreen(
         }
 
         Spacer(modifier = Modifier.height(10.dp))
+
+        // Diálogo de confirmación de eliminación
+        if (showDeleteDialog.value) {
+            AlertDialog(
+                onDismissRequest = { showDeleteDialog.value = false },
+                title = { Text("Confirmar Eliminación") },
+                text = { Text("¿Estás seguro de que deseas eliminar este hábito?") },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            habitToDelete.value?.let { viewModel.deleteHabit(it.id) }
+                            showDeleteDialog.value = false
+                        }
+                    ) {
+                        Text("Eliminar", color = Color.Red)
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showDeleteDialog.value = false }) {
+                        Text("Cancelar")
+                    }
+                },
+                modifier = Modifier.clip(RoundedCornerShape(16.dp))
+            )
+        }
     }
 }
 
 @Composable
 fun HabitCard(
-    habitName: String,
-    frequency: String,
-    difficulty: String,
-    xp: String,
-    isCompleted: Boolean = false
+    habit: Habit,
+    onCompleteClick: () -> Unit = {},
+    onDeleteClick: () -> Unit = {}
 ) {
     Box(
         modifier = Modifier
@@ -241,7 +275,7 @@ fun HabitCard(
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = habitName,
+                    text = habit.nombre,
                     color = Color.White,
                     fontWeight = FontWeight.Bold,
                     fontSize = 16.sp
@@ -257,7 +291,7 @@ fun HabitCard(
                     Box(
                         modifier = Modifier
                             .background(
-                                color = when (frequency) {
+                                color = when (habit.frecuencia) {
                                     "DAILY" -> Color(0xFF00FF88)
                                     "WEEKLY" -> Color(0xFF0088FF)
                                     else -> Color(0xFFFF8800)
@@ -267,8 +301,8 @@ fun HabitCard(
                             .padding(horizontal = 6.dp, vertical = 2.dp)
                     ) {
                         Text(
-                            text = frequency,
-                            color = if (frequency == "DAILY") Color(0xFF1a3a2a) else Color.White,
+                            text = habit.frecuencia,
+                            color = if (habit.frecuencia == "DAILY") Color(0xFF1a3a2a) else Color.White,
                             fontWeight = FontWeight.Bold,
                             fontSize = 11.sp
                         )
@@ -278,7 +312,7 @@ fun HabitCard(
                     Box(
                         modifier = Modifier
                             .background(
-                                color = when (difficulty) {
+                                color = when (habit.dificultad) {
                                     "EASY" -> Color(0xFF00FF88)
                                     "MED" -> Color(0xFFFFAA00)
                                     "HARD" -> Color(0xFFFF3333)
@@ -289,8 +323,8 @@ fun HabitCard(
                             .padding(horizontal = 6.dp, vertical = 2.dp)
                     ) {
                         Text(
-                            text = difficulty,
-                            color = if (difficulty == "EASY") Color(0xFF1a3a2a) else Color.White,
+                            text = habit.dificultad,
+                            color = if (habit.dificultad == "EASY") Color(0xFF1a3a2a) else Color.White,
                             fontWeight = FontWeight.Bold,
                             fontSize = 11.sp
                         )
@@ -305,7 +339,7 @@ fun HabitCard(
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text("⚡ ", fontSize = 10.sp)
                             Text(
-                                text = xp,
+                                text = habit.xp.toString(),
                                 color = Color(0xFF00FF88),
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 11.sp
@@ -323,13 +357,13 @@ fun HabitCard(
                     .size(48.dp)
                     .clip(RoundedCornerShape(10.dp))
                     .background(
-                        if (isCompleted) Color(0xFF00FF88)
+                        if (habit.completado) Color(0xFF00FF88)
                         else Color(0xFF2c4d3a)
                     )
-                    .clickable { },
+                    .clickable { onCompleteClick() },
                 contentAlignment = Alignment.Center
             ) {
-                if (isCompleted) {
+                if (habit.completado) {
                     Text("✓", fontSize = 28.sp, color = Color(0xFF1a3a2a), fontWeight = FontWeight.Bold)
                 } else {
                 Icon(
@@ -340,7 +374,26 @@ fun HabitCard(
                 )
                 }
             }
+
+            // Delete button
+            IconButton(
+                onClick = { onDeleteClick() },
+                modifier = Modifier.size(48.dp),
+                colors = IconButtonDefaults.iconButtonColors(
+                    containerColor = Color(0xFFFF3333),
+                    contentColor = Color.White
+                )
+            ) {
+                Icon(Icons.Default.Delete, contentDescription = "Delete")
+            }
         }
     }
 }
 
+@Preview(showBackground = true)
+@Composable
+fun HabitsListScreenPreview() {
+    HabitQuestTheme {
+        HabitsListScreen()
+    }
+}

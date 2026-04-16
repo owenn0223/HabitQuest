@@ -30,7 +30,8 @@ import com.example.habitquest.viewmodel.DashboardViewModel
 fun DashboardScreen(
     onCreateHabitClick: () -> Unit = {},
     onHabitsListClick: () -> Unit = {},
-    onAchievementsClick: () -> Unit = {}
+    onAchievementsClick: () -> Unit = {},
+    onSettingsClick: () -> Unit = {}
 ) {
     // ✅ ViewModel conectado a Room
     val viewModel: DashboardViewModel = viewModel()
@@ -78,7 +79,7 @@ fun DashboardScreen(
             IconButton(onClick = { /* TODO: Notificaciones */ }) {
                 Icon(Icons.Default.Notifications, contentDescription = "Notificaciones", tint = Color.White)
             }
-            IconButton(onClick = { /* TODO: Settings */ }) {
+            IconButton(onClick = onSettingsClick) {
                 Icon(Icons.Default.Settings, contentDescription = "Settings", tint = Color.White)
             }
         }

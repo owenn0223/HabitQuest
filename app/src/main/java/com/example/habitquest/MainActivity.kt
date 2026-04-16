@@ -30,7 +30,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.habitquest.database.HabitDatabase
 import com.example.habitquest.database.UsuarioRepository
 import com.example.habitquest.manager.SesionManager
@@ -66,7 +65,8 @@ enum class Screen {
     DASHBOARD,
     CREATE_HABIT,
     HABITS_LIST,
-    ACHIEVEMENTS
+    ACHIEVEMENTS,
+    SETTINGS
 }
 
 @Composable
@@ -112,7 +112,8 @@ fun AppNavigation(sesionManager: SesionManager, usuarioRepository: UsuarioReposi
         Screen.DASHBOARD -> DashboardScreen(
             onCreateHabitClick = { currentScreen.value = Screen.CREATE_HABIT },
             onHabitsListClick = { currentScreen.value = Screen.HABITS_LIST },
-            onAchievementsClick = { currentScreen.value = Screen.ACHIEVEMENTS }
+            onAchievementsClick = { currentScreen.value = Screen.ACHIEVEMENTS },
+            onSettingsClick = { currentScreen.value = Screen.SETTINGS }
         )
         Screen.CREATE_HABIT -> CreateHabitScreen(
             onBack = { currentScreen.value = Screen.DASHBOARD }
@@ -124,6 +125,11 @@ fun AppNavigation(sesionManager: SesionManager, usuarioRepository: UsuarioReposi
         )
         Screen.ACHIEVEMENTS -> AchievementsScreen(
             onBack = { currentScreen.value = Screen.DASHBOARD }
+        )
+        Screen.SETTINGS -> SettingsScreen(
+            sesionManager = sesionManager,
+            onBackClick = { currentScreen.value = Screen.DASHBOARD },
+            onLogoutClick = { currentScreen.value = Screen.WELCOME }
         )
     }
 }

@@ -2,8 +2,104 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "93576d92cb90d61ee726bcd292a570d5",
+    "identityHash": "49426243b048da5f05a96746565f2724",
     "entities": [
+      {
+        "tableName": "usuario",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `nombre` TEXT NOT NULL, `correo` TEXT NOT NULL, `contraseña` TEXT NOT NULL, `clase` TEXT NOT NULL, `nivelActual` INTEGER NOT NULL, `xpActual` INTEGER NOT NULL, `xpTotal` INTEGER NOT NULL, `rachaActual` INTEGER NOT NULL, `ultimaFecha` TEXT NOT NULL, `disciplina` INTEGER NOT NULL, `fuerza` INTEGER NOT NULL, `inteligencia` INTEGER NOT NULL, `consistencia` INTEGER NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "nombre",
+            "columnName": "nombre",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "correo",
+            "columnName": "correo",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "contraseña",
+            "columnName": "contraseña",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "clase",
+            "columnName": "clase",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "nivelActual",
+            "columnName": "nivelActual",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "xpActual",
+            "columnName": "xpActual",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "xpTotal",
+            "columnName": "xpTotal",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "rachaActual",
+            "columnName": "rachaActual",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "ultimaFecha",
+            "columnName": "ultimaFecha",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "disciplina",
+            "columnName": "disciplina",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fuerza",
+            "columnName": "fuerza",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "inteligencia",
+            "columnName": "inteligencia",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "consistencia",
+            "columnName": "consistencia",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        }
+      },
       {
         "tableName": "habit",
         "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `nombre` TEXT NOT NULL, `frecuencia` TEXT NOT NULL, `dificultad` TEXT NOT NULL, `xp` INTEGER NOT NULL, `completado` INTEGER NOT NULL, `fechaCreacion` TEXT NOT NULL, `ultimaVezCompletado` TEXT NOT NULL)",
@@ -67,7 +163,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '93576d92cb90d61ee726bcd292a570d5')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '49426243b048da5f05a96746565f2724')"
     ]
   }
 }

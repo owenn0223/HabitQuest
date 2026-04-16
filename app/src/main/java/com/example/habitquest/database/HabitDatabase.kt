@@ -5,6 +5,7 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import com.example.habitquest.model.Habit
+import com.example.habitquest.model.Usuario
 
 /**
  * Base de datos Room para la aplicación HabitQuest
@@ -22,11 +23,17 @@ import com.example.habitquest.model.Habit
  */
 
 @Database(
-    entities = [Habit::class], // Entidades incluidas en esta BD
+    entities = [Usuario::class, Habit::class], // Entidades incluidas en esta BD
     version = 1, // Versión actual de la BD (incrementar en migraciones)
     exportSchema = true // Exporta esquema para debugging
 )
 abstract class HabitDatabase : RoomDatabase() {
+
+    /**
+     * DAO para operaciones con usuarios
+     * Room genera automáticamente la implementación
+     */
+    abstract fun usuarioDao(): UsuarioDao
 
     /**
      * DAO para operaciones con hábitos
@@ -64,7 +71,7 @@ abstract class HabitDatabase : RoomDatabase() {
                     HabitDatabase::class.java,
                     DATABASE_NAME
                 )
-                    .fallbackToDestructiveMigration() // Para desarrollo: borra y recrea si hay cambios
+                    .fallbackToDestructiveMigration(true) // Para desarrollo: borra y recrea si hay cambios
                     .build()
                 INSTANCE = instance
                 instance

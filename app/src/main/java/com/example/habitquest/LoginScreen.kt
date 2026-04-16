@@ -22,8 +22,12 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import com.example.habitquest.viewmodel.EstadoLogin
+import com.example.habitquest.viewmodel.LoginViewModel
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -36,13 +40,24 @@ import androidx.compose.ui.unit.sp
 
 @Composable
 fun LoginScreen(
+    viewModel: LoginViewModel,
     onBackClick: () -> Unit = {},
     onLoginSuccess: () -> Unit = {},
     onCreateCharacterClick: () -> Unit = {}
 ) {
-    val emailAddress = remember { mutableStateOf("") }
-    val password = remember { mutableStateOf("") }
     val showPassword = remember { mutableStateOf(false) }
+
+    // Observar estados del ViewModel
+    val estadoLogin = viewModel.estadoLogin.collectAsState()
+    val correo = viewModel.correo.collectAsState()
+    val contraseña = viewModel.contraseña.collectAsState()
+
+    // Efecto para manejar navegación después de login exitoso
+    LaunchedEffect(estadoLogin.value) {
+        if (estadoLogin.value is EstadoLogin.Exitoso) {
+            onLoginSuccess()
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -153,8 +168,8 @@ fun LoginScreen(
 
         // EMAIL ADDRESS INPUT
         OutlinedTextField(
-            value = emailAddress.value,
-            onValueChange = { emailAddress.value = it },
+            value = correo.value,
+            onValueChange = { viewModel.actualizarCorreo(it) },
             placeholder = {
                 Text(
                     text = "hero@habitquest.com",
@@ -201,8 +216,8 @@ fun LoginScreen(
 
         // PASSWORD INPUT
         OutlinedTextField(
-            value = password.value,
-            onValueChange = { password.value = it },
+            value = contraseña.value,
+            onValueChange = { viewModel.actualizarContraseña(it) },
             placeholder = {
                 Text(
                     text = "••••••••",
@@ -269,7 +284,7 @@ fun LoginScreen(
 
         // BOTÓN LOG IN
         Button(
-            onClick = { onLoginSuccess() },
+            onClick = { viewModel.iniciarSesion() },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp),
@@ -312,4 +327,3 @@ fun LoginScreen(
         Spacer(modifier = Modifier.height(40.dp))
     }
 }
-

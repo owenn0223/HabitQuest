@@ -30,7 +30,14 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.habitquest.database.HabitDatabase
+import com.example.habitquest.database.UsuarioRepository
+import com.example.habitquest.manager.SesionManager
 import com.example.habitquest.ui.theme.HabitQuestTheme
+import com.example.habitquest.viewmodel.LoginViewModel
+import com.example.habitquest.viewmodel.PantallaDestino
+import com.example.habitquest.viewmodel.SplashViewModel
+import com.example.habitquest.viewmodel.RegistroViewModel
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -38,7 +45,12 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             HabitQuestTheme {
-                AppNavigation()
+                // Crear el SesionManager una sola vez
+                val sesionManager = SesionManager(this@MainActivity)
+                // Crear base de datos y repositorio
+                val database = HabitDatabase.getDatabase(this@MainActivity)
+                val usuarioRepository = UsuarioRepository(database.usuarioDao())
+                AppNavigation(sesionManager = sesionManager, usuarioRepository = usuarioRepository)
             }
         }
     }
@@ -46,36 +58,62 @@ class MainActivity : ComponentActivity() {
 
 // Enum para controlar qué pantalla mostrar
 enum class Screen {
+    SPLASH,        // Pantalla de carga que verifica sesión
     WELCOME,
     CREATE_HERO,
     LOGIN,
     DASHBOARD,
     CREATE_HABIT,
     HABITS_LIST,
-    ACHIEVEMENTS // Nueva pantalla
+    ACHIEVEMENTS,
+    SETTINGS
 }
 
 @Composable
-fun AppNavigation() {
-    val currentScreen = remember { mutableStateOf(Screen.WELCOME) }
+fun AppNavigation(sesionManager: SesionManager, usuarioRepository: UsuarioRepository) {
+    val currentScreen = remember { mutableStateOf(Screen.SPLASH) }
+
 
     when (currentScreen.value) {
+        Screen.SPLASH -> {
+            val splashViewModel = SplashViewModel(sesionManager)
+            SplashScreen(
+                viewModel = splashViewModel,
+                onNavegacionDeterminada = { destino ->
+                    currentScreen.value = when (destino) {
+                        PantallaDestino.HOME -> Screen.DASHBOARD
+                        PantallaDestino.LOGIN -> Screen.WELCOME
+                    }
+                }
+            )
+        }
         Screen.WELCOME -> WelcomeScreen(
             onCreateCharacterClick = { currentScreen.value = Screen.CREATE_HERO },
             onLoginClick = { currentScreen.value = Screen.LOGIN }
         )
-        Screen.CREATE_HERO -> CreateHeroScreen(
-            onBackClick = { currentScreen.value = Screen.WELCOME }
-        )
-        Screen.LOGIN -> LoginScreen(
-            onBackClick = { currentScreen.value = Screen.WELCOME },
-            onLoginSuccess = { currentScreen.value = Screen.DASHBOARD },
-            onCreateCharacterClick = { currentScreen.value = Screen.CREATE_HERO }
-        )
+        Screen.CREATE_HERO -> {
+            val registroViewModel = RegistroViewModel(usuarioRepository, sesionManager)
+            CreateHeroScreen(
+                viewModel = registroViewModel,
+                onBackClick = { currentScreen.value = Screen.WELCOME },
+                onRegistrationSuccess = { currentScreen.value = Screen.DASHBOARD },
+                onLoginClick = { currentScreen.value = Screen.LOGIN }
+            )
+        }
+        Screen.LOGIN -> {
+            val loginViewModel = LoginViewModel(usuarioRepository, sesionManager)
+            LoginScreen(
+                viewModel = loginViewModel,
+                onBackClick = { currentScreen.value = Screen.WELCOME },
+                onLoginSuccess = { currentScreen.value = Screen.DASHBOARD },
+                onCreateCharacterClick = { currentScreen.value = Screen.CREATE_HERO }
+            )
+        }
         Screen.DASHBOARD -> DashboardScreen(
             onCreateHabitClick = { currentScreen.value = Screen.CREATE_HABIT },
             onHabitsListClick = { currentScreen.value = Screen.HABITS_LIST },
-            onAchievementsClick = { currentScreen.value = Screen.ACHIEVEMENTS }
+            onAchievementsClick = { currentScreen.value = Screen.ACHIEVEMENTS },
+            onSettingsClick = { currentScreen.value = Screen.SETTINGS }
         )
         Screen.CREATE_HABIT -> CreateHabitScreen(
             onBack = { currentScreen.value = Screen.DASHBOARD }
@@ -87,6 +125,11 @@ fun AppNavigation() {
         )
         Screen.ACHIEVEMENTS -> AchievementsScreen(
             onBack = { currentScreen.value = Screen.DASHBOARD }
+        )
+        Screen.SETTINGS -> SettingsScreen(
+            sesionManager = sesionManager,
+            onBackClick = { currentScreen.value = Screen.DASHBOARD },
+            onLogoutClick = { currentScreen.value = Screen.WELCOME }
         )
     }
 }

@@ -23,6 +23,8 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -37,14 +39,31 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.habitquest.ui.theme.HabitQuestTheme
+import com.example.habitquest.viewmodel.EstadoRegistro
+import com.example.habitquest.viewmodel.RegistroViewModel
 
 @Composable
-fun CreateHeroScreen(onBackClick: () -> Unit = {}) {
-    val heroName = remember { mutableStateOf("") }
-    val emailAddress = remember { mutableStateOf("") }
-    val password = remember { mutableStateOf("") }
+fun CreateHeroScreen(
+    viewModel: RegistroViewModel,
+    onBackClick: () -> Unit = {},
+    onRegistrationSuccess: () -> Unit = {},
+    onLoginClick: () -> Unit = {}
+) {
     val showPassword = remember { mutableStateOf(false) }
-    val selectedClass = remember { mutableStateOf("Warrior") }
+
+    // Observar estados del ViewModel
+    val estadoRegistro = viewModel.estadoRegistro.collectAsState()
+    val nombre = viewModel.nombre.collectAsState()
+    val correo = viewModel.correo.collectAsState()
+    val contraseña = viewModel.contraseña.collectAsState()
+    val clase = viewModel.clase.collectAsState()
+
+    // Efecto para manejar navegación después de registro exitoso
+    LaunchedEffect(estadoRegistro.value) {
+        if (estadoRegistro.value is EstadoRegistro.Exitoso) {
+            onRegistrationSuccess()
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -62,7 +81,6 @@ fun CreateHeroScreen(onBackClick: () -> Unit = {}) {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            // 📍 BOTÓN ATRÁS - REEMPLAZAR CON ICONO
             Box(
                 modifier = Modifier
                     .size(40.dp)
@@ -86,7 +104,6 @@ fun CreateHeroScreen(onBackClick: () -> Unit = {}) {
                 textAlign = TextAlign.Center
             )
 
-            // Espacio para balancear
             Spacer(modifier = Modifier.size(40.dp))
         }
 
@@ -97,13 +114,12 @@ fun CreateHeroScreen(onBackClick: () -> Unit = {}) {
             modifier = Modifier.size(160.dp),
             contentAlignment = Alignment.Center
         ) {
-            // Círculo externo (efecto de sombra/gradiente)
             Box(
                 modifier = Modifier
                     .size(160.dp)
                     .border(
                         width = 6.dp,
-                        color = Color(0xFFB8956A), // Color beige/marrón para sombra
+                        color = Color(0xFFB8956A),
                         shape = CircleShape
                     )
                     .background(
@@ -113,7 +129,6 @@ fun CreateHeroScreen(onBackClick: () -> Unit = {}) {
                     .clip(CircleShape),
                 contentAlignment = Alignment.Center
             ) {
-                // Círculo blanco interior
                 Box(
                     modifier = Modifier
                         .size(120.dp)
@@ -164,8 +179,8 @@ fun CreateHeroScreen(onBackClick: () -> Unit = {}) {
 
         // HERO NAME INPUT
         OutlinedTextField(
-            value = heroName.value,
-            onValueChange = { heroName.value = it },
+            value = nombre.value,
+            onValueChange = { viewModel.actualizarNombre(it) },
             placeholder = {
                 Text(
                     text = "Ex: Arthur Pendragon",
@@ -201,8 +216,8 @@ fun CreateHeroScreen(onBackClick: () -> Unit = {}) {
 
         // EMAIL ADDRESS INPUT
         OutlinedTextField(
-            value = emailAddress.value,
-            onValueChange = { emailAddress.value = it },
+            value = correo.value,
+            onValueChange = { viewModel.actualizarCorreo(it) },
             placeholder = {
                 Text(
                     text = "email@example.com",
@@ -238,8 +253,8 @@ fun CreateHeroScreen(onBackClick: () -> Unit = {}) {
 
         // SECRET PASSWORD INPUT
         OutlinedTextField(
-            value = password.value,
-            onValueChange = { password.value = it },
+            value = contraseña.value,
+            onValueChange = { viewModel.actualizarContraseña(it) },
             placeholder = {
                 Text(
                     text = "••••••••",
@@ -253,7 +268,6 @@ fun CreateHeroScreen(onBackClick: () -> Unit = {}) {
                 PasswordVisualTransformation()
             },
             trailingIcon = {
-                // 📍 ICONO DE OJO/VISIBILIDAD - Reemplazar con Icon real
                 Box(
                     modifier = Modifier
                         .size(24.dp)
@@ -300,30 +314,27 @@ fun CreateHeroScreen(onBackClick: () -> Unit = {}) {
                 .padding(bottom = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            // WARRIOR CLASS
             ClassCard(
                 name = "Warrior",
-                icon = "⚔️", // 📍 REEMPLAZAR CON ICONO REAL
-                isSelected = selectedClass.value == "Warrior",
-                onClick = { selectedClass.value = "Warrior" },
+                icon = "⚔️",
+                isSelected = clase.value == "Warrior",
+                onClick = { viewModel.actualizarClase("Warrior") },
                 modifier = Modifier.weight(1f)
             )
 
-            // MAGE CLASS
             ClassCard(
                 name = "Mage",
-                icon = "🔮", // 📍 REEMPLAZAR CON ICONO REAL
-                isSelected = selectedClass.value == "Mage",
-                onClick = { selectedClass.value = "Mage" },
+                icon = "🔮",
+                isSelected = clase.value == "Mage",
+                onClick = { viewModel.actualizarClase("Mage") },
                 modifier = Modifier.weight(1f)
             )
 
-            // SAGE CLASS
             ClassCard(
                 name = "Sage",
-                icon = "📖", // 📍 REEMPLAZAR CON ICONO REAL
-                isSelected = selectedClass.value == "Sage",
-                onClick = { selectedClass.value = "Sage" },
+                icon = "📖",
+                isSelected = clase.value == "Sage",
+                onClick = { viewModel.actualizarClase("Sage") },
                 modifier = Modifier.weight(1f)
             )
         }
@@ -332,7 +343,7 @@ fun CreateHeroScreen(onBackClick: () -> Unit = {}) {
 
         // BOTÓN CREATE ACCOUNT
         Button(
-            onClick = { /* TODO: Crear cuenta */ },
+            onClick = { viewModel.registrarUsuario() },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp),
@@ -346,6 +357,18 @@ fun CreateHeroScreen(onBackClick: () -> Unit = {}) {
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color(0xFF1a3a2a)
+            )
+        }
+
+        // Mostrar mensaje de error si existe
+        if (estadoRegistro.value is EstadoRegistro.Error) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = (estadoRegistro.value as EstadoRegistro.Error).mensaje,
+                color = Color.Red,
+                fontSize = 14.sp,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth()
             )
         }
 
@@ -369,7 +392,7 @@ fun CreateHeroScreen(onBackClick: () -> Unit = {}) {
                 fontSize = 14.sp,
                 color = Color(0xFF00FF88),
                 fontWeight = FontWeight.Bold,
-                modifier = Modifier.clickable { /* TODO: Navegar a Login */ }
+                modifier = Modifier.clickable { onLoginClick() }
             )
         }
 
@@ -440,12 +463,3 @@ fun ClassCard(
         }
     }
 }
-
-@Preview(showBackground = true)
-@Composable
-fun CreateHeroScreenPreview() {
-    HabitQuestTheme {
-        CreateHeroScreen()
-    }
-}
-

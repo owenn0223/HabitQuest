@@ -74,7 +74,8 @@ fun AppNavigation() {
         )
         Screen.DASHBOARD -> DashboardScreen(
             onCreateHabitClick = { currentScreen.value = Screen.CREATE_HABIT },
-            onHabitsListClick = { currentScreen.value = Screen.HABITS_LIST }
+            onHabitsListClick = { currentScreen.value = Screen.HABITS_LIST },
+            onAchievementsClick = { currentScreen.value = Screen.ACHIEVEMENTS }
         )
         Screen.CREATE_HABIT -> CreateHabitScreen(
             onBack = { currentScreen.value = Screen.DASHBOARD }

@@ -5,6 +5,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import com.example.habitquest.model.Usuario
+import kotlinx.coroutines.flow.Flow
 
 /**
  * Data Access Object (DAO) para la entidad Usuario
@@ -64,6 +65,18 @@ interface UsuarioDao {
     suspend fun getUsuarioById(id: Int): Usuario?
 
     /**
+     * OBTENER USUARIO POR ID - FLOW
+     *
+     * Obtiene un usuario por su ID como Flow observable
+     * Útil para observar cambios en un usuario específico
+     *
+     * @param id ID del usuario
+     * @return Flow<Usuario?> Flow que emite el usuario o null
+     */
+    @Query("SELECT * FROM usuario WHERE id = :id LIMIT 1")
+    fun getUsuarioByIdFlow(id: Int): Flow<Usuario?>
+
+    /**
      * ACTUALIZAR USUARIO (UPDATE)
      *
      * Actualiza los datos de un usuario existente
@@ -79,4 +92,31 @@ interface UsuarioDao {
      */
     @androidx.room.Delete
     suspend fun deleteUsuario(usuario: Usuario)
+
+    /**
+     * OBTENER EL PRIMER USUARIO (para aplicaciones single-user)
+     *
+     * Obtiene el primer (único) usuario registrado
+     * Útil cuando solo hay un usuario logueado por sesión
+     */
+    @Query("SELECT * FROM usuario LIMIT 1")
+    suspend fun getFirstUsuario(): Usuario?
+
+    /**
+     * OBTENER EL PRIMER USUARIO (para aplicaciones single-user) - FLOW
+     *
+     * Obtiene el primer (único) usuario registrado como Flow observable
+     * Útil para observar cambios en tiempo real
+     */
+    @Query("SELECT * FROM usuario LIMIT 1")
+    fun getFirstUsuarioFlow(): Flow<Usuario?>
+
+    /**
+     * ACTUALIZAR SOLO XP TOTAL
+     *
+     * Suma XP al XP total del usuario
+     * Usado cuando se completa un hábito
+     */
+    @Query("UPDATE usuario SET xpTotal = xpTotal + :xpGanado WHERE id = :usuarioId")
+    suspend fun sumarXPTotal(usuarioId: Int, xpGanado: Int)
 }

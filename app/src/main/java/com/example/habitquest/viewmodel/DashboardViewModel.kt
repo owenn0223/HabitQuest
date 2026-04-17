@@ -1,9 +1,12 @@
 package com.example.habitquest.viewmodel
 
 import android.app.Application
+import android.content.Context
+import android.content.SharedPreferences
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.habitquest.database.HabitDatabase
+import com.example.habitquest.manager.SesionManager
 import com.example.habitquest.model.Habit
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -17,6 +20,17 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
 
     private val database = HabitDatabase.getDatabase(application)
     private val habitDao = database.habitDao()
+    private val usuarioDao = database.usuarioDao()
+
+    private val sharedPreferences: SharedPreferences =
+        application.getSharedPreferences("habitquest_prefs", Context.MODE_PRIVATE)
+
+    // SesionManager para obtener datos del usuario
+    private val sesionManager = SesionManager(application)
+
+    companion object {
+        private const val LAST_RESET_DATE_KEY = "last_reset_date"
+    }
 
     // Hábitos completados hoy vs total (ej: "4/8")
     private val _habitsToday = MutableStateFlow("0/0")
@@ -27,7 +41,7 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
     private val _streak = MutableStateFlow(0)
     val streak: StateFlow<Int> = _streak
 
-    // XP total acumulado (suma de XP de hábitos completados)
+    // XP total acumulado (obtenido del usuario)
     private val _totalXP = MutableStateFlow(0)
     val totalXP: StateFlow<Int> = _totalXP
 
@@ -48,11 +62,43 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
     private val _currentQuest = MutableStateFlow<Habit?>(null)
     val currentQuest: StateFlow<Habit?> = _currentQuest
 
+    // Estadísticas adicionales para StatisticsScreen
+    private val _habitsCreated = MutableStateFlow(0)
+    val habitsCreated: StateFlow<Int> = _habitsCreated
+
+    private val _habitsCompleted = MutableStateFlow(0)
+    val habitsCompleted: StateFlow<Int> = _habitsCompleted
+
+    private val _achievements = MutableStateFlow(0)
+    val achievements: StateFlow<Int> = _achievements
+
+    private val _bestStreak = MutableStateFlow(0)
+    val bestStreak: StateFlow<Int> = _bestStreak
+
+    // Datos del usuario desde SesionManager
+    private val _userName = MutableStateFlow("Hero")
+    val userName: StateFlow<String> = _userName
+
+    private val _userClass = MutableStateFlow("WARRIOR")
+    val userClass: StateFlow<String> = _userClass
+
     init {
+        loadUserData()
         observeHabits()
     }
 
     private fun observeHabits() {
+        // Reset diario de hábitos
+        viewModelScope.launch {
+            val today = getCurrentDate()
+            val lastReset = sharedPreferences.getString(LAST_RESET_DATE_KEY, "")
+
+            if (today != lastReset) {
+                sharedPreferences.edit().putString(LAST_RESET_DATE_KEY, today).apply()
+                habitDao.resetAllHabitsCompletion()
+            }
+        }
+
         viewModelScope.launch {
             habitDao.getAllHabits().collectLatest { habits ->
                 updateStats(habits)
@@ -73,20 +119,30 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
         // Hábitos hoy
         _habitsToday.value = "$completed/$total"
 
-        // XP total = suma del XP de todos los hábitos completados
-        val xp = habits.filter { it.completado }.sumOf { it.xp }
-        _totalXP.value = xp
+        // Obtener XP total del usuario (no solo de hoy)
+        viewModelScope.launch {
+            val usuario = usuarioDao.getFirstUsuario()
+            if (usuario != null) {
+                val xp = usuario.xpTotal
+                _totalXP.value = xp
 
-        // Calcular nivel desde XP
-        val nivelInfo = calcularNivel(xp)
-        _level.value = nivelInfo.nivel
-        _xpInLevel.value = nivelInfo.xpEnNivel
-        _xpForNextLevel.value = nivelInfo.xpParaSiguiente
-        _xpProgress.value = nivelInfo.porcentaje
+                // Calcular nivel desde XP
+                val nivelInfo = calcularNivel(xp)
+                _level.value = nivelInfo.nivel
+                _xpInLevel.value = nivelInfo.xpEnNivel
+                _xpForNextLevel.value = nivelInfo.xpParaSiguiente
+                _xpProgress.value = nivelInfo.porcentaje
+            }
+        }
 
         // Racha simplificada: si hoy hay al menos 1 hábito completado = racha activa
-        // (una racha real requeriría historial de días anteriores con ProgressoDiario)
         _streak.value = if (completed > 0) 1 else 0
+
+        // Estadísticas adicionales
+        _habitsCreated.value = total
+        _habitsCompleted.value = completed
+        _achievements.value = 0 // TODO: Calcular logros
+        _bestStreak.value = 0 // TODO: Calcular mejor racha
     }
 
     /**
@@ -101,6 +157,12 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
                 ultimaVezCompletado = today
             )
             habitDao.updateHabit(updated)
+
+            // Agregar XP al usuario
+            val usuario = usuarioDao.getFirstUsuario()
+            if (usuario != null) {
+                usuarioDao.sumarXPTotal(usuario.id, quest.xp)
+            }
         }
     }
 
@@ -133,4 +195,15 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
         val xpParaSiguiente: Int,
         val porcentaje: Float
     )
+
+    private fun loadUserData() {
+        viewModelScope.launch {
+            usuarioDao.getFirstUsuarioFlow().collectLatest { usuario ->
+                usuario?.let {
+                    _userName.value = it.nombre
+                    _userClass.value = it.clase
+                }
+            }
+        }
+    }
 }

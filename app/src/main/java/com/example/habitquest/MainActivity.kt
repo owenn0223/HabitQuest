@@ -43,6 +43,8 @@ import com.example.habitquest.viewmodel.RegistroViewModel
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // Permitir que la app dibuje detrás de las barras del sistema
+        androidx.core.view.WindowCompat.setDecorFitsSystemWindows(window, false)
         enableEdgeToEdge()
         setContent {
             HabitQuestTheme {
@@ -66,7 +68,9 @@ enum class Screen {
     DASHBOARD,
     CREATE_HABIT,
     HABITS_LIST,
-    ACHIEVEMENTS
+    ACHIEVEMENTS,
+    PROFILE,
+    STATISTICS
 }
 
 @Composable
@@ -112,7 +116,8 @@ fun AppNavigation(sesionManager: SesionManager, usuarioRepository: UsuarioReposi
         Screen.DASHBOARD -> DashboardScreen(
             onCreateHabitClick = { currentScreen.value = Screen.CREATE_HABIT },
             onHabitsListClick = { currentScreen.value = Screen.HABITS_LIST },
-            onAchievementsClick = { currentScreen.value = Screen.ACHIEVEMENTS }
+            onAchievementsClick = { currentScreen.value = Screen.ACHIEVEMENTS },
+            onProfileClick = { currentScreen.value = Screen.PROFILE }
         )
         Screen.CREATE_HABIT -> CreateHabitScreen(
             onBack = { currentScreen.value = Screen.DASHBOARD }
@@ -120,10 +125,20 @@ fun AppNavigation(sesionManager: SesionManager, usuarioRepository: UsuarioReposi
         Screen.HABITS_LIST -> HabitsListScreen(
             onBack = { currentScreen.value = Screen.DASHBOARD },
             onCreateHabit = { currentScreen.value = Screen.CREATE_HABIT },
-            onAchievementsClick = { currentScreen.value = Screen.ACHIEVEMENTS }
+            onAchievementsClick = { currentScreen.value = Screen.ACHIEVEMENTS },
+            onProfileClick = { currentScreen.value = Screen.PROFILE }
         )
         Screen.ACHIEVEMENTS -> AchievementsScreen(
             onBack = { currentScreen.value = Screen.DASHBOARD }
+        )
+        Screen.PROFILE -> ProfileScreen(
+            onBack = { currentScreen.value = Screen.DASHBOARD },
+            onStatisticsClick = { currentScreen.value = Screen.STATISTICS },
+            onAchievementsClick = { currentScreen.value = Screen.ACHIEVEMENTS },
+            onLogout = { currentScreen.value = Screen.WELCOME }
+        )
+        Screen.STATISTICS -> StatisticsScreen(
+            onBack = { currentScreen.value = Screen.PROFILE }
         )
     }
 }

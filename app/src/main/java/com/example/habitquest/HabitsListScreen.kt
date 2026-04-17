@@ -38,13 +38,15 @@ import androidx.compose.runtime.mutableStateOf
 fun HabitsListScreen(
     onBack: () -> Unit = {},
     onCreateHabit: () -> Unit = {},
-    onAchievementsClick: () -> Unit = {}
+    onAchievementsClick: () -> Unit = {},
+    onProfileClick: () -> Unit = {}
 ) {
     // VIEWMODEL - Conectar con Room Database
     val viewModel: HabitsListViewModel = viewModel()
     val habits by viewModel.habits.collectAsState()
     val currentFilter by viewModel.currentFilter.collectAsState()
     val remainingHabits by viewModel.remainingHabits.collectAsState()
+    val userLevel by viewModel.userLevel.collectAsState()
 
     // Estado para diálogo de confirmación de eliminación
     val showDeleteDialog = remember { mutableStateOf(false) }
@@ -82,7 +84,7 @@ fun HabitsListScreen(
                         .background(Color(0xFF00FF88), RoundedCornerShape(8.dp))
                         .padding(horizontal = 8.dp, vertical = 4.dp)
                 ) {
-                    Text("⚡ LVL 14", color = Color(0xFF1a3a2a), fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                    Text("⚡ LVL $userLevel", color = Color(0xFF1a3a2a), fontWeight = FontWeight.Bold, fontSize = 12.sp)
                 }
                 Spacer(modifier = Modifier.width(8.dp))
                 Icon(Icons.Default.Settings, contentDescription = "Profile", tint = Color.White)
@@ -139,17 +141,6 @@ fun HabitsListScreen(
                 color = Color(0xFF999999),
                 fontSize = 12.sp
             )
-        }
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        // BOTÓN TEMPORAL PARA AGREGAR HÁBITOS DE PRUEBA
-        Button(
-            onClick = { viewModel.addSampleHabits() },
-            modifier = Modifier.fillMaxWidth(),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0088FF))
-        ) {
-            Text("Agregar Hábitos de Prueba", color = Color.White)
         }
 
         Spacer(modifier = Modifier.height(12.dp))
@@ -222,7 +213,7 @@ fun HabitsListScreen(
             IconButton(onClick = { /* TODO: Gear */ }) {
                 Text("🎒", fontSize = 26.sp)
             }
-            IconButton(onClick = { onAchievementsClick() }) {
+            IconButton(onClick = { onProfileClick() }) {
                 Text("👥", fontSize = 26.sp)
             }
         }

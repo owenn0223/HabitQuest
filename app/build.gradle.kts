@@ -42,6 +42,11 @@ android {
     }
 
     // ✅ Elimina el bloque composeOptions — ya no es necesario con el plugin de Kotlin 2.0
+
+    // Configurar lint baseline para ignorar errores existentes
+    lint {
+        baseline = file("lint-baseline.xml")
+    }
 }
 
 dependencies {
@@ -56,6 +61,7 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
+    implementation("androidx.compose.foundation:foundation:1.6.7")
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

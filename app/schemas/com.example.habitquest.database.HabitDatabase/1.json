@@ -2,6 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
+    "identityHash": "59609789697ff5ebf2f59ce952a70ace",
     "identityHash": "49426243b048da5f05a96746565f2724",
     "entities": [
       {
@@ -102,7 +103,7 @@
       },
       {
         "tableName": "habit",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `nombre` TEXT NOT NULL, `frecuencia` TEXT NOT NULL, `dificultad` TEXT NOT NULL, `xp` INTEGER NOT NULL, `completado` INTEGER NOT NULL, `fechaCreacion` TEXT NOT NULL, `ultimaVezCompletado` TEXT NOT NULL)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `nombre` TEXT NOT NULL, `descripcion` TEXT NOT NULL, `frecuencia` TEXT NOT NULL, `dificultad` TEXT NOT NULL, `tipo` TEXT NOT NULL, `emoji` TEXT NOT NULL, `xp` INTEGER NOT NULL, `completado` INTEGER NOT NULL, `fechaCreacion` TEXT NOT NULL, `ultimaVezCompletado` TEXT NOT NULL)",
         "fields": [
           {
             "fieldPath": "id",
@@ -117,6 +118,12 @@
             "notNull": true
           },
           {
+            "fieldPath": "descripcion",
+            "columnName": "descripcion",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
             "fieldPath": "frecuencia",
             "columnName": "frecuencia",
             "affinity": "TEXT",
@@ -125,6 +132,18 @@
           {
             "fieldPath": "dificultad",
             "columnName": "dificultad",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "tipo",
+            "columnName": "tipo",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "emoji",
+            "columnName": "emoji",
             "affinity": "TEXT",
             "notNull": true
           },
@@ -163,6 +182,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '59609789697ff5ebf2f59ce952a70ace')"
       "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '49426243b048da5f05a96746565f2724')"
     ]
   }

@@ -35,6 +35,10 @@ class HabitsListViewModel(application: Application) : AndroidViewModel(applicati
     // Instancia de la base de datos
     private val database = HabitDatabase.getDatabase(application)
     private val habitDao = database.habitDao()
+    private val usuarioDao = database.usuarioDao()
+
+    // SesionManager para obtener datos del usuario
+    private val sesionManager = com.example.habitquest.manager.SesionManager(application)
 
     // Estado de la UI
     private val _habits = MutableStateFlow<List<Habit>>(emptyList())
@@ -48,9 +52,14 @@ class HabitsListViewModel(application: Application) : AndroidViewModel(applicati
     private val _remainingHabits = MutableStateFlow(0)
     val remainingHabits: StateFlow<Int> = _remainingHabits
 
+    // Nivel del usuario
+    private val _userLevel = MutableStateFlow(1)
+    val userLevel: StateFlow<Int> = _userLevel
+
     init {
         // Cargar datos iniciales
         loadHabits()
+        loadUserLevel()
     }
 
     /**
@@ -80,6 +89,53 @@ class HabitsListViewModel(application: Application) : AndroidViewModel(applicati
     }
 
     /**
+     * CARGA NIVEL DE USUARIO
+     *
+     * Carga el nivel actual del usuario calculándolo desde el XP total
+     * Se ejecuta una vez al inicio y observa cambios
+     */
+    private fun loadUserLevel() {
+        viewModelScope.launch {
+            val userId = sesionManager.obtenerUsuarioId()
+            if (userId != -1) {
+                // Observar cambios en el usuario específico usando su ID
+                usuarioDao.getUsuarioByIdFlow(userId).collectLatest { usuario ->
+                    usuario?.let {
+                        // Calcular nivel desde XP total, igual que DashboardViewModel
+                        val nivelInfo = calcularNivel(it.xpTotal)
+                        _userLevel.value = nivelInfo.nivel
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Calcula el nivel y progreso de XP
+     * Fórmula: XP para nivel N = N * 100
+     */
+    private fun calcularNivel(xpTotal: Int): NivelInfo {
+        var nivel = 1
+        var xpAcumulado = 0
+        while (xpTotal >= xpAcumulado + (nivel * 100)) {
+            xpAcumulado += nivel * 100
+            nivel++
+        }
+        val xpEnNivel = xpTotal - xpAcumulado
+        val xpParaSiguiente = nivel * 100
+        val porcentaje = if (xpParaSiguiente > 0)
+            xpEnNivel.toFloat() / xpParaSiguiente else 0f
+        return NivelInfo(nivel, xpEnNivel, xpParaSiguiente, porcentaje)
+    }
+
+    private data class NivelInfo(
+        val nivel: Int,
+        val xpEnNivel: Int,
+        val xpParaSiguiente: Int,
+        val porcentaje: Float
+    )
+
+    /**
      * CAMBIAR FILTRO
      *
      * Actualiza el filtro actual y recarga los hábitos
@@ -95,6 +151,7 @@ class HabitsListViewModel(application: Application) : AndroidViewModel(applicati
      *
      * Alterna el estado de completado de un hábito
      * Actualiza la fecha de última vez completado
+     * Si se completa, suma XP al usuario
      *
      * @param habitId ID del hábito a completar
      */
@@ -103,11 +160,20 @@ class HabitsListViewModel(application: Application) : AndroidViewModel(applicati
             val habit = habitDao.getHabitById(habitId)
             habit?.let {
                 val today = getCurrentDate()
+                val wasCompleted = it.completado
                 val updatedHabit = it.copy(
                     completado = !it.completado,
                     ultimaVezCompletado = if (!it.completado) today else it.ultimaVezCompletado
                 )
                 habitDao.updateHabit(updatedHabit)
+
+                // Si se está completando el hábito (no descompletando), sumar XP
+                if (!wasCompleted && updatedHabit.completado) {
+                    val userId = sesionManager.obtenerUsuarioId()
+                    if (userId != -1) {
+                        usuarioDao.sumarXPTotal(userId, it.xp)
+                    }
+                }
             }
         }
     }

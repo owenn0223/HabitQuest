@@ -31,7 +31,7 @@ fun DashboardScreen(
     onCreateHabitClick: () -> Unit = {},
     onHabitsListClick: () -> Unit = {},
     onAchievementsClick: () -> Unit = {},
-    onSettingsClick: () -> Unit = {}
+    onProfileClick: () -> Unit = {}
 ) {
     // ✅ ViewModel conectado a Room
     val viewModel: DashboardViewModel = viewModel()
@@ -45,6 +45,10 @@ fun DashboardScreen(
     val xpForNextLevel by viewModel.xpForNextLevel.collectAsState()
     val xpProgress by viewModel.xpProgress.collectAsState()
     val currentQuest by viewModel.currentQuest.collectAsState()
+
+    // ✅ Datos del usuario desde SesionManager
+    val userName by viewModel.userName.collectAsState()
+    val userClass by viewModel.userClass.collectAsState()
 
     Column(
         modifier = Modifier
@@ -79,8 +83,8 @@ fun DashboardScreen(
             IconButton(onClick = { /* TODO: Notificaciones */ }) {
                 Icon(Icons.Default.Notifications, contentDescription = "Notificaciones", tint = Color.White)
             }
-            IconButton(onClick = onSettingsClick) {
-                Icon(Icons.Default.Settings, contentDescription = "Settings", tint = Color.White)
+            IconButton(onClick = { onProfileClick() }) {
+                Icon(Icons.Default.Settings, contentDescription = "Profile", tint = Color.White)
             }
         }
 
@@ -101,18 +105,27 @@ fun DashboardScreen(
                         .background(Color(0xFF0d6b4f)),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("🛡️", fontSize = 28.sp)
+                    Text(
+                        text = when (userClass.uppercase()) {
+                            "WARRIOR" -> "⚔️"
+                            "MAGE" -> "🔮"
+                            "SAGE" -> "📚"
+                            "ADVENTURER" -> "🗺️"
+                            else -> "🛡️"
+                        },
+                        fontSize = 28.sp
+                    )
                 }
                 Spacer(modifier = Modifier.width(14.dp))
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        "Ironclad Guardian",
+                        userName,
                         color = Color.White,
                         fontWeight = FontWeight.Bold,
                         fontSize = 18.sp
                     )
                     Text(
-                        "WARRIOR CLASS",
+                        "$userClass CLASS",
                         color = Color(0xFF00FF88),
                         fontWeight = FontWeight.Bold,
                         fontSize = 13.sp
@@ -411,7 +424,7 @@ fun DashboardScreen(
             IconButton(onClick = { /* TODO: Items */ }) {
                 Text("🎒", fontSize = 26.sp)
             }
-            IconButton(onClick = { onAchievementsClick() }) {
+            IconButton(onClick = { onProfileClick() }) {
                 Text("👥", fontSize = 26.sp)
             }
         }

@@ -1,57 +1,56 @@
 package com.example.habitquest
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.habitquest.ui.theme.HabitQuestTheme
 import com.example.habitquest.viewmodel.CreateHabitViewModel
 
 @Composable
 fun CreateHabitScreen(
     onBack: () -> Unit = {},
-    viewModel: CreateHabitViewModel = viewModel()
+    onBeginQuest: () -> Unit = {}
 ) {
-    // Observar estados del ViewModel
-    val nombre by viewModel.nombre.collectAsState()
-    val descripcion by viewModel.descripcion.collectAsState()
-    val frecuencia by viewModel.frecuencia.collectAsState()
-    val dificultad by viewModel.dificultad.collectAsState()
-    val tipo by viewModel.tipo.collectAsState()
+    // VIEWMODEL - Maneja la lógica de creación de hábitos
+    val viewModel: CreateHabitViewModel = viewModel()
+    val habitName by viewModel.habitName.collectAsState()
+    val selectedFrequency by viewModel.selectedFrequency.collectAsState()
+    val selectedDifficulty by viewModel.selectedDifficulty.collectAsState()
+    val selectedAttribute by viewModel.selectedAttribute.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
     val errorMessage by viewModel.errorMessage.collectAsState()
-    val habitCreado by viewModel.habitCreado.collectAsState()
-
-    // Cuando el hábito se guarda exitosamente, navegar atrás
-    LaunchedEffect(habitCreado) {
-        if (habitCreado) onBack()
-    }
-
+    val successMessage by viewModel.successMessage.collectAsState()
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(Color(0xFF1a3a2a))
             .padding(horizontal = 16.dp)
-            .verticalScroll(rememberScrollState()) // Para que no se corte en pantallas pequeñas
     ) {
         Spacer(modifier = Modifier.height(24.dp))
-
-        // ---- Header ----
+        // Header
         Row(verticalAlignment = Alignment.CenterVertically) {
-            IconButton(onClick = onBack) {
+            IconButton(onClick = { onBack() }) {
                 Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = Color.White)
             }
             Spacer(modifier = Modifier.width(8.dp))
@@ -62,10 +61,61 @@ fun CreateHabitScreen(
                 fontSize = 20.sp
             )
         }
-
         Spacer(modifier = Modifier.height(18.dp))
 
-        // ---- Nombre del hábito ----
+        // MOSTRAR MENSAJE DE ERROR
+        errorMessage?.let { error ->
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color(0xFFFF3333), RoundedCornerShape(8.dp))
+                    .padding(12.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(error, color = Color.White, fontSize = 12.sp, modifier = Modifier.weight(1f))
+                    Text(
+                        "✕",
+                        modifier = Modifier.clickable { viewModel.clearErrorMessage() },
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+        }
+
+        // MOSTRAR MENSAJE DE ÉXITO
+        successMessage?.let { success ->
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color(0xFF00FF88), RoundedCornerShape(8.dp))
+                    .padding(12.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(success, color = Color(0xFF1a3a2a), fontSize = 12.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+                    Text(
+                        "✓",
+                        modifier = Modifier.clickable { viewModel.clearSuccessMessage() },
+                        color = Color(0xFF1a3a2a),
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+        }
+
+        // Quest Details
         Text(
             text = "QUEST DETAILS",
             color = Color(0xFF00FF88),
@@ -74,54 +124,24 @@ fun CreateHabitScreen(
         )
         Spacer(modifier = Modifier.height(8.dp))
         OutlinedTextField(
-            value = nombre,
-            onValueChange = {
-                viewModel.nombre.value = it
-                viewModel.limpiarError()
-            },
+            value = habitName,
+            onValueChange = { viewModel.setHabitName(it) },
             placeholder = { Text("e.g., Morning Meditation", color = Color(0xFF55ffb0)) },
             textStyle = TextStyle(color = Color.White, fontSize = 16.sp),
-            modifier = Modifier.fillMaxWidth(),
-            colors = OutlinedTextFieldDefaults.colors(
-                unfocusedBorderColor = if (errorMessage != null) Color.Red else Color(0xFF00FF88),
-                focusedBorderColor = if (errorMessage != null) Color.Red else Color(0xFF00FF88),
-                cursorColor = Color(0xFF00FF88),
-                unfocusedContainerColor = Color.Transparent,
-                focusedContainerColor = Color.Transparent
-            )
-        )
-
-        // Mensaje de error
-        if (errorMessage != null) {
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = errorMessage!!,
-                color = Color.Red,
-                fontSize = 12.sp
-            )
-        }
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        // ---- Descripción (opcional) ----
-        OutlinedTextField(
-            value = descripcion,
-            onValueChange = { viewModel.descripcion.value = it },
-            placeholder = { Text("Short description (optional)", color = Color(0xFF55ffb0)) },
-            textStyle = TextStyle(color = Color.White, fontSize = 14.sp),
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color.Transparent, RoundedCornerShape(12.dp)),
             colors = OutlinedTextFieldDefaults.colors(
                 unfocusedBorderColor = Color(0xFF00FF88),
                 focusedBorderColor = Color(0xFF00FF88),
                 cursorColor = Color(0xFF00FF88),
                 unfocusedContainerColor = Color.Transparent,
                 focusedContainerColor = Color.Transparent
-            )
+            ),
+            enabled = !isLoading
         )
-
         Spacer(modifier = Modifier.height(18.dp))
-
-        // ---- Frecuencia ----
+        // Frequency
         Text(
             text = "FREQUENCY",
             color = Color(0xFF00FF88),
@@ -130,31 +150,31 @@ fun CreateHabitScreen(
         )
         Spacer(modifier = Modifier.height(8.dp))
         Row(modifier = Modifier.fillMaxWidth()) {
-            listOf("DAILY", "WEEKLY", "MONTHLY").forEach { opcion ->
-                val seleccionado = frecuencia == opcion
+            listOf("DAILY", "WEEKLY", "MONTHLY").forEach { frequency ->
                 Box(
                     modifier = Modifier
                         .weight(1f)
                         .clip(RoundedCornerShape(10.dp))
-                        .background(if (seleccionado) Color(0xFF00FF88) else Color(0xFF203c2e))
-                        .clickable { viewModel.frecuencia.value = opcion }
+                        .background(
+                            if (selectedFrequency == frequency) Color(0xFF00FF88)
+                            else Color(0xFF203c2e)
+                        )
+                        .clickable(enabled = !isLoading) { viewModel.setFrequency(frequency) }
                         .padding(vertical = 10.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = opcion,
-                        color = if (seleccionado) Color(0xFF1a3a2a) else Color.White,
+                        frequency,
+                        color = if (selectedFrequency == frequency) Color(0xFF1a3a2a) else Color.White,
                         fontWeight = FontWeight.Bold,
-                        fontSize = 13.sp
+                        fontSize = 15.sp
                     )
                 }
-                if (opcion != "MONTHLY") Spacer(modifier = Modifier.width(8.dp))
+                if (frequency != "MONTHLY") Spacer(modifier = Modifier.width(8.dp))
             }
         }
-
         Spacer(modifier = Modifier.height(18.dp))
-
-        // ---- Dificultad ----
+        // Difficulty
         Text(
             text = "DIFFICULTY LEVEL",
             color = Color(0xFF00FF88),
@@ -163,43 +183,45 @@ fun CreateHabitScreen(
         )
         Spacer(modifier = Modifier.height(8.dp))
         Row(modifier = Modifier.fillMaxWidth()) {
-            listOf(
-                Triple("EASY", "😊", "10 XP"),
-                Triple("MED", "⚡", "20 XP"),
-                Triple("HARD", "💀", "40 XP")
-            ).forEach { (nivel, icono, xpLabel) ->
-                val seleccionado = dificultad == nivel
+            val difficulties = listOf(
+                Triple("EASY", "😊", 10),
+                Triple("MED", "⚡", 20),
+                Triple("HARD", "💀", 40)
+            )
+            difficulties.forEach { (difficulty, emoji, xp) ->
                 Box(
                     modifier = Modifier
                         .weight(1f)
                         .clip(RoundedCornerShape(10.dp))
-                        .background(if (seleccionado) Color(0xFF00FF88) else Color(0xFF203c2e))
-                        .clickable { viewModel.dificultad.value = nivel }
+                        .background(
+                            if (selectedDifficulty == difficulty) Color(0xFF00FF88)
+                            else Color(0xFF203c2e)
+                        )
+                        .clickable(enabled = !isLoading) { viewModel.setDifficulty(difficulty) }
                         .padding(vertical = 14.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(icono, fontSize = 22.sp)
+                        Text(emoji, fontSize = 22.sp)
                         Text(
-                            text = nivel,
-                            color = if (seleccionado) Color(0xFF1a3a2a) else Color.White,
+                            if (difficulty == "MED") "MEDIUM" else difficulty,
+                            color = if (selectedDifficulty == difficulty) Color(0xFF1a3a2a) else Color.White,
                             fontWeight = FontWeight.Bold,
-                            fontSize = 12.sp
+                            fontSize = 13.sp
                         )
                         Text(
-                            text = xpLabel,
-                            color = if (seleccionado) Color(0xFF1a3a2a) else Color(0xFF00FF88),
-                            fontSize = 11.sp
+                            "$xp XP",
+                            color = if (selectedDifficulty == difficulty) Color(0xFF1a3a2a) else Color(0xFF00FF88),
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 10.sp
                         )
                     }
                 }
-                if (nivel != "HARD") Spacer(modifier = Modifier.width(8.dp))
+                if (difficulty != "HARD") Spacer(modifier = Modifier.width(8.dp))
             }
         }
-
         Spacer(modifier = Modifier.height(18.dp))
-
-        // ---- RPG Attribute Focus ----
+        // RPG Attribute Focus
         Text(
             text = "RPG ATTRIBUTE FOCUS",
             color = Color(0xFF00FF88),
@@ -207,95 +229,159 @@ fun CreateHabitScreen(
             fontSize = 14.sp
         )
         Spacer(modifier = Modifier.height(8.dp))
-
-        val atributos = listOf(
-            Pair("Strength", "🏋️"),
-            Pair("Intelligence", "🧠"),
-            Pair("Agility", "🏃"),
-            Pair("Charisma", "🗣️")
-        )
-
-        // Primera fila
         Row(modifier = Modifier.fillMaxWidth()) {
-            atributos.take(2).forEach { (nombre, icono) ->
-                val seleccionado = tipo == nombre
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(if (seleccionado) Color(0xFF00FF88) else Color(0xFF203c2e))
-                        .clickable { viewModel.tipo.value = nombre }
-                        .padding(vertical = 12.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(icono, fontSize = 18.sp)
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = nombre,
-                            color = if (seleccionado) Color(0xFF1a3a2a) else Color.White,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 13.sp
-                        )
-                    }
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(
+                        if (selectedAttribute == "Strength") Color(0xFF00FF88)
+                        else Color(0xFF203c2e)
+                    )
+                    .clickable(enabled = !isLoading) { viewModel.setAttribute("Strength") }
+                    .padding(vertical = 12.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("🏋️", fontSize = 18.sp)
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        "Strength",
+                        color = if (selectedAttribute == "Strength") Color(0xFF1a3a2a) else Color.White,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp
+                    )
                 }
-                if (nombre == "Strength") Spacer(modifier = Modifier.width(8.dp))
+            }
+            Spacer(modifier = Modifier.width(8.dp))
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(
+                        if (selectedAttribute == "Intelligence") Color(0xFF00FF88)
+                        else Color(0xFF203c2e)
+                    )
+                    .clickable(enabled = !isLoading) { viewModel.setAttribute("Intelligence") }
+                    .padding(vertical = 12.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("🧠", fontSize = 18.sp)
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        "Intelligence",
+                        color = if (selectedAttribute == "Intelligence") Color(0xFF1a3a2a) else Color.White,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp
+                    )
+                }
             }
         }
-
         Spacer(modifier = Modifier.height(8.dp))
-
-        // Segunda fila
         Row(modifier = Modifier.fillMaxWidth()) {
-            atributos.drop(2).forEach { (nombre, icono) ->
-                val seleccionado = tipo == nombre
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(if (seleccionado) Color(0xFF00FF88) else Color(0xFF203c2e))
-                        .clickable { viewModel.tipo.value = nombre }
-                        .padding(vertical = 12.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(icono, fontSize = 18.sp)
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = nombre,
-                            color = if (seleccionado) Color(0xFF1a3a2a) else Color.White,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 13.sp
-                        )
-                    }
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(
+                        if (selectedAttribute == "Agility") Color(0xFF00FF88)
+                        else Color(0xFF203c2e)
+                    )
+                    .clickable(enabled = !isLoading) { viewModel.setAttribute("Agility") }
+                    .padding(vertical = 12.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("🏃", fontSize = 18.sp)
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        "Agility",
+                        color = if (selectedAttribute == "Agility") Color(0xFF1a3a2a) else Color.White,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp
+                    )
                 }
-                if (nombre == "Agility") Spacer(modifier = Modifier.width(8.dp))
+            }
+            Spacer(modifier = Modifier.width(8.dp))
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(
+                        if (selectedAttribute == "Charisma") Color(0xFF00FF88)
+                        else Color(0xFF203c2e)
+                    )
+                    .clickable(enabled = !isLoading) { viewModel.setAttribute("Charisma") }
+                    .padding(vertical = 12.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("🗣️", fontSize = 18.sp)
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        "Charisma",
+                        color = if (selectedAttribute == "Charisma") Color(0xFF1a3a2a) else Color.White,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp
+                    )
+                }
             }
         }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // ---- Botón guardar ----
+        Spacer(modifier = Modifier.weight(1f))
+        // Begin Quest Button
         Button(
-            onClick = { viewModel.guardarHabito() },
+            onClick = {
+                viewModel.createHabit {
+                    // Callback cuando se crea exitosamente
+                    onBeginQuest()
+                }
+            },
             modifier = Modifier
                 .fillMaxWidth()
-                .height(54.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00FF88)),
-            shape = RoundedCornerShape(14.dp)
+                .height(54.dp)
+                .padding(vertical = 12.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color(0xFF00FF88),
+                disabledContainerColor = Color(0xFF00AA55)
+            ),
+            shape = RoundedCornerShape(14.dp),
+            enabled = !isLoading && habitName.isNotBlank()
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("⚔️", fontSize = 22.sp)
+            if (isLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(24.dp),
+                    color = Color(0xFF1a3a2a),
+                    strokeWidth = 2.dp
+                )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "BEGIN QUEST",
+                    text = "CREATING...",
                     color = Color(0xFF1a3a2a),
                     fontWeight = FontWeight.Bold,
                     fontSize = 18.sp
                 )
+            } else {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("⚔️", fontSize = 22.sp, color = Color(0xFF1a3a2a))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "BEGIN QUEST",
+                        color = Color(0xFF1a3a2a),
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp
+                    )
+                }
             }
         }
+        Spacer(modifier = Modifier.height(10.dp))
+    }
+}
 
-        Spacer(modifier = Modifier.height(24.dp))
+@Composable
+@Preview(showBackground = true)
+fun CreateHabitScreenPreview() {
+    HabitQuestTheme {
+        CreateHabitScreen()
     }
 }

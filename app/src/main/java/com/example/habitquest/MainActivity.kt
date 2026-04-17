@@ -30,6 +30,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.habitquest.database.HabitDatabase
 import com.example.habitquest.database.UsuarioRepository
 import com.example.habitquest.manager.SesionManager
@@ -42,6 +43,8 @@ import com.example.habitquest.viewmodel.RegistroViewModel
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // Permitir que la app dibuje detrás de las barras del sistema
+        androidx.core.view.WindowCompat.setDecorFitsSystemWindows(window, false)
         enableEdgeToEdge()
         setContent {
             HabitQuestTheme {
@@ -66,7 +69,8 @@ enum class Screen {
     CREATE_HABIT,
     HABITS_LIST,
     ACHIEVEMENTS,
-    SETTINGS
+    PROFILE,
+    STATISTICS
 }
 
 @Composable
@@ -113,7 +117,7 @@ fun AppNavigation(sesionManager: SesionManager, usuarioRepository: UsuarioReposi
             onCreateHabitClick = { currentScreen.value = Screen.CREATE_HABIT },
             onHabitsListClick = { currentScreen.value = Screen.HABITS_LIST },
             onAchievementsClick = { currentScreen.value = Screen.ACHIEVEMENTS },
-            onSettingsClick = { currentScreen.value = Screen.SETTINGS }
+            onProfileClick = { currentScreen.value = Screen.PROFILE }
         )
         Screen.CREATE_HABIT -> CreateHabitScreen(
             onBack = { currentScreen.value = Screen.DASHBOARD }
@@ -121,15 +125,20 @@ fun AppNavigation(sesionManager: SesionManager, usuarioRepository: UsuarioReposi
         Screen.HABITS_LIST -> HabitsListScreen(
             onBack = { currentScreen.value = Screen.DASHBOARD },
             onCreateHabit = { currentScreen.value = Screen.CREATE_HABIT },
-            onAchievementsClick = { currentScreen.value = Screen.ACHIEVEMENTS }
+            onAchievementsClick = { currentScreen.value = Screen.ACHIEVEMENTS },
+            onProfileClick = { currentScreen.value = Screen.PROFILE }
         )
         Screen.ACHIEVEMENTS -> AchievementsScreen(
             onBack = { currentScreen.value = Screen.DASHBOARD }
         )
-        Screen.SETTINGS -> SettingsScreen(
-            sesionManager = sesionManager,
-            onBackClick = { currentScreen.value = Screen.DASHBOARD },
-            onLogoutClick = { currentScreen.value = Screen.WELCOME }
+        Screen.PROFILE -> ProfileScreen(
+            onBack = { currentScreen.value = Screen.DASHBOARD },
+            onStatisticsClick = { currentScreen.value = Screen.STATISTICS },
+            onAchievementsClick = { currentScreen.value = Screen.ACHIEVEMENTS },
+            onLogout = { currentScreen.value = Screen.WELCOME }
+        )
+        Screen.STATISTICS -> StatisticsScreen(
+            onBack = { currentScreen.value = Screen.PROFILE }
         )
     }
 }

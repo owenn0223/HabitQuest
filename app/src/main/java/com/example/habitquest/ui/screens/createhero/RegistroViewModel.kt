@@ -1,4 +1,4 @@
-package com.example.habitquest.viewmodel
+package com.example.habitquest.ui.screens.createhero
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -116,10 +116,8 @@ class RegistroViewModel(
                     _estadoRegistro.value = EstadoRegistro.Error("El correo ya está registrado")
                 }
             } catch (e: Exception) {
-                // ESTO TE DIRÁ EL ERROR REAL EN PANTALLA
-                _estadoRegistro.value = EstadoRegistro.Error("Error: ${e.localizedMessage}")
-                // Y esto lo imprimirá en el Logcat de Android Studio
-                e.printStackTrace()
+                // Error inesperado
+                _estadoRegistro.value = EstadoRegistro.Error("Error al crear cuenta. Inténtalo de nuevo.")
             }
         }
     }

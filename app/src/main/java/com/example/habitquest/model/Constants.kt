@@ -1,14 +1,9 @@
 package com.example.habitquest.model
 
-import java.text.SimpleDateFormat
-import java.util.Calendar
-import java.util.Date
-import java.util.Locale
-
-// Dificultad y XP
-const val DIFICULTAD_EASY = "EASY"      // 10 XP
-const val DIFICULTAD_MEDIUM = "MEDIUM"  // 20 XP
-const val DIFICULTAD_HARD = "HARD"      // 40 XP
+// Dificultad
+const val DIFICULTAD_EASY = "EASY"
+const val DIFICULTAD_MEDIUM = "MEDIUM"
+const val DIFICULTAD_HARD = "HARD"
 
 // Frecuencia
 const val FRECUENCIA_DAILY = "DAILY"
@@ -35,37 +30,4 @@ fun getXPPorDificultad(dificultad: String): Int = when (dificultad) {
     DIFICULTAD_MEDIUM -> 20
     DIFICULTAD_HARD -> 40
     else -> 0
-}
-
-data class NivelInfo(
-    val nivel: Int,
-    val xpEnNivel: Int,
-    val xpParaSiguiente: Int,
-    val porcentaje: Float
-)
-
-fun calcularNivel(xpTotal: Int): NivelInfo {
-    var nivel = 1
-    var xpAcumulado = 0
-    while (xpTotal >= xpAcumulado + (nivel * 100)) {
-        xpAcumulado += nivel * 100
-        nivel++
-    }
-    val xpEnNivel = xpTotal - xpAcumulado
-    val xpParaSiguiente = nivel * 100
-    val porcentaje = xpEnNivel.toFloat() / xpParaSiguiente
-    return NivelInfo(nivel, xpEnNivel, xpParaSiguiente, porcentaje)
-}
-
-fun fechaActual(): String {
-    val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-    return sdf.format(Date())
-}
-
-fun sumarDias(fecha: String, dias: Int): String {
-    val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-    val calendar = Calendar.getInstance()
-    calendar.time = sdf.parse(fecha) ?: Date()
-    calendar.add(Calendar.DAY_OF_YEAR, dias)
-    return sdf.format(calendar.time)
 }

@@ -18,16 +18,14 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import com.example.habitquest.ui.screens.login.EstadoLogin
-import com.example.habitquest.ui.screens.login.LoginViewModel
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -46,16 +44,19 @@ fun LoginScreen(
     onCreateCharacterClick: () -> Unit = {}
 ) {
     val showPassword = remember { mutableStateOf(false) }
+    val email = remember { mutableStateOf("") }
+    val password = remember { mutableStateOf("") }
 
     // Observar estados del ViewModel
-    val estadoLogin = viewModel.estadoLogin.collectAsState()
-    val correo = viewModel.correo.collectAsState()
-    val contraseña = viewModel.contraseña.collectAsState()
+    val isLoading = viewModel.isLoading.value
+    val error = viewModel.error.value
+    val loginSuccess = viewModel.loginSuccess.value
 
-    // Efecto para manejar navegación después de login exitoso
-    LaunchedEffect(estadoLogin.value) {
-        if (estadoLogin.value is EstadoLogin.Exitoso) {
+    // Efecto para navegar después de login exitoso
+    LaunchedEffect(loginSuccess) {
+        if (loginSuccess) {
             onLoginSuccess()
+            viewModel.resetLoginState()
         }
     }
 
@@ -155,6 +156,23 @@ fun LoginScreen(
 
         Spacer(modifier = Modifier.height(40.dp))
 
+        // MOSTRAR ERROR SI EXISTE
+        if (error != null) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color(0xFFD32F2F), shape = RoundedCornerShape(8.dp))
+                    .padding(12.dp)
+            ) {
+                Text(
+                    text = error,
+                    fontSize = 14.sp,
+                    color = Color.White
+                )
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+
         // EMAIL ADDRESS LABEL
         Text(
             text = "Email Address",
@@ -168,8 +186,8 @@ fun LoginScreen(
 
         // EMAIL ADDRESS INPUT
         OutlinedTextField(
-            value = correo.value,
-            onValueChange = { viewModel.actualizarCorreo(it) },
+            value = email.value,
+            onValueChange = { email.value = it },
             placeholder = {
                 Text(
                     text = "hero@habitquest.com",
@@ -198,7 +216,8 @@ fun LoginScreen(
                 unfocusedTextColor = Color(0xFFCCCCCC)
             ),
             shape = RoundedCornerShape(14.dp),
-            singleLine = true
+            singleLine = true,
+            enabled = !isLoading
         )
 
         Spacer(modifier = Modifier.height(20.dp))
@@ -216,8 +235,8 @@ fun LoginScreen(
 
         // PASSWORD INPUT
         OutlinedTextField(
-            value = contraseña.value,
-            onValueChange = { viewModel.actualizarContraseña(it) },
+            value = password.value,
+            onValueChange = { password.value = it },
             placeholder = {
                 Text(
                     text = "••••••••",
@@ -264,7 +283,8 @@ fun LoginScreen(
                 unfocusedTextColor = Color(0xFFCCCCCC)
             ),
             shape = RoundedCornerShape(14.dp),
-            singleLine = true
+            singleLine = true,
+            enabled = !isLoading
         )
 
         Spacer(modifier = Modifier.height(12.dp))
@@ -284,29 +304,39 @@ fun LoginScreen(
 
         // BOTÓN LOG IN
         Button(
-            onClick = { viewModel.iniciarSesion() },
+            onClick = {
+                viewModel.login(email.value, password.value)
+            },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp),
             colors = ButtonDefaults.buttonColors(
                 containerColor = Color(0xFF00FF88)
             ),
-            shape = RoundedCornerShape(16.dp)
+            shape = RoundedCornerShape(16.dp),
+            enabled = !isLoading
         ) {
-            Text(
-                text = "Log In →",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFF1a3a2a)
-            )
+            if (isLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(24.dp),
+                    color = Color(0xFF1a3a2a),
+                    strokeWidth = 2.dp
+                )
+            } else {
+                Text(
+                    text = "Log In →",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF1a3a2a)
+                )
+            }
         }
 
         Spacer(modifier = Modifier.height(20.dp))
 
         // LINK SIGNUP
         Row(
-            modifier = Modifier
-                .fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -327,3 +357,4 @@ fun LoginScreen(
         Spacer(modifier = Modifier.height(40.dp))
     }
 }
+

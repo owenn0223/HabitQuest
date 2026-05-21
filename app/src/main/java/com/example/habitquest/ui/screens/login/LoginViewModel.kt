@@ -1,111 +1,60 @@
 package com.example.habitquest.ui.screens.login
 
+import androidx.compose.runtime.State
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.habitquest.database.UsuarioRepository
 import com.example.habitquest.manager.SesionManager
-import com.example.habitquest.model.Usuario
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
+import com.example.habitquest.network.LoginRequest
+import com.example.habitquest.network.RetrofitClient
 import kotlinx.coroutines.launch
 
-/**
- * ViewModel para manejar la lógica del login
- *
- * Gestiona la validación de credenciales, manejo de errores
- * y navegación después del login exitoso.
- */
 class LoginViewModel(
     private val usuarioRepository: UsuarioRepository,
     private val sesionManager: SesionManager
 ) : ViewModel() {
 
-    // Estados para la UI
-    private val _estadoLogin = MutableStateFlow<EstadoLogin>(EstadoLogin.Idle)
-    val estadoLogin: StateFlow<EstadoLogin> = _estadoLogin
+    private val _isLoading = mutableStateOf(false)
+    val isLoading: State<Boolean> get() = _isLoading
 
-    // Campos del formulario
-    private val _correo = MutableStateFlow("")
-    val correo: StateFlow<String> = _correo
+    private val _error = mutableStateOf<String?>(null)
+    val error: State<String?> get() = _error
 
-    private val _contraseña = MutableStateFlow("")
-    val contraseña: StateFlow<String> = _contraseña
+    private val _loginSuccess = mutableStateOf(false)
+    val loginSuccess: State<Boolean> get() = _loginSuccess
 
-    /**
-     * Actualizar correo
-     */
-    fun actualizarCorreo(nuevoCorreo: String) {
-        _correo.value = nuevoCorreo
-    }
-
-    /**
-     * Actualizar contraseña
-     */
-    fun actualizarContraseña(nuevaContraseña: String) {
-        _contraseña.value = nuevaContraseña
-    }
-
-    /**
-     * Intentar iniciar sesión
-     */
-    fun iniciarSesion() {
-        val correoActual = _correo.value.trim()
-        val contraseñaActual = _contraseña.value
-
-        // Validaciones básicas
-        if (correoActual.isEmpty()) {
-            _estadoLogin.value = EstadoLogin.Error("El correo es obligatorio")
-            return
-        }
-
-        if (contraseñaActual.isEmpty()) {
-            _estadoLogin.value = EstadoLogin.Error("La contraseña es obligatoria")
-            return
-        }
-
-        // Cambiar a estado cargando
-        _estadoLogin.value = EstadoLogin.Cargando
-
-        // Ejecutar login en corrutina
+    fun login(email: String, password: String) {
         viewModelScope.launch {
+            _isLoading.value = true
+            _error.value = null
+
             try {
-                val usuario = usuarioRepository.iniciarSesion(correoActual, contraseñaActual)
+                val request = LoginRequest(email = email, password = password)
+                val response = RetrofitClient.instance.login(request)
 
-                if (usuario != null) {
-                    // Login exitoso: guardar sesión
-                    sesionManager.guardarSesion(
-                        usuarioId = usuario.id,
-                        nombre = usuario.nombre,
-                        correo = usuario.correo,
-                        clase = usuario.clase
-                    )
-
-                    _estadoLogin.value = EstadoLogin.Exitoso
+                if (response.isSuccessful) {
+                    val body = response.body()
+                    if (body != null && !body.token.isNullOrEmpty()) {
+                        sesionManager.guardarToken(body.token)
+                        _loginSuccess.value = true
+                    } else {
+                        _error.value = "Respuesta inválida del servidor"
+                    }
                 } else {
-                    // Credenciales inválidas
-                    _estadoLogin.value = EstadoLogin.Error("Correo o contraseña incorrectos")
+                    _error.value = "Error: ${response.code()} - ${response.message()}"
                 }
             } catch (e: Exception) {
-                // Error inesperado
-                _estadoLogin.value = EstadoLogin.Error("Error al iniciar sesión. Inténtalo de nuevo.")
+                _error.value = "Sin conexión a internet"
+            } finally {
+                _isLoading.value = false
             }
         }
     }
 
-    /**
-     * Resetear estado (útil después de mostrar error)
-     */
-    fun resetearEstado() {
-        _estadoLogin.value = EstadoLogin.Idle
+    fun resetLoginState() {
+        _loginSuccess.value = false
+        _error.value = null
     }
 }
 
-/**
- * Estados posibles del proceso de login
- */
-sealed class EstadoLogin {
-    object Idle : EstadoLogin()           // Estado inicial
-    object Cargando : EstadoLogin()       // Validando credenciales
-    object Exitoso : EstadoLogin()        // Login exitoso
-    data class Error(val mensaje: String) : EstadoLogin() // Error con mensaje
-}

@@ -2,28 +2,20 @@ package com.example.habitquest.ui.screens.createhero
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.habitquest.database.UsuarioRepository
 import com.example.habitquest.manager.SesionManager
+import com.example.habitquest.network.RegisterRequest
+import com.example.habitquest.network.RetrofitClient
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
-/**
- * ViewModel para manejar la lógica del registro de usuario
- *
- * Gestiona la creación de cuenta, validaciones y navegación
- * después del registro exitoso.
- */
 class RegistroViewModel(
-    private val usuarioRepository: UsuarioRepository,
     private val sesionManager: SesionManager
 ) : ViewModel() {
 
-    // Estados para la UI
     private val _estadoRegistro = MutableStateFlow<EstadoRegistro>(EstadoRegistro.Idle)
     val estadoRegistro: StateFlow<EstadoRegistro> = _estadoRegistro
 
-    // Campos del formulario
     private val _nombre = MutableStateFlow("")
     val nombre: StateFlow<String> = _nombre
 
@@ -36,44 +28,28 @@ class RegistroViewModel(
     private val _clase = MutableStateFlow("Warrior")
     val clase: StateFlow<String> = _clase
 
-    /**
-     * Actualizar nombre
-     */
     fun actualizarNombre(nuevoNombre: String) {
         _nombre.value = nuevoNombre
     }
 
-    /**
-     * Actualizar correo
-     */
     fun actualizarCorreo(nuevoCorreo: String) {
         _correo.value = nuevoCorreo
     }
 
-    /**
-     * Actualizar contraseña
-     */
     fun actualizarContraseña(nuevaContraseña: String) {
         _contraseña.value = nuevaContraseña
     }
 
-    /**
-     * Actualizar clase
-     */
     fun actualizarClase(nuevaClase: String) {
         _clase.value = nuevaClase
     }
 
-    /**
-     * Intentar registrar usuario
-     */
     fun registrarUsuario() {
         val nombreActual = _nombre.value.trim()
         val correoActual = _correo.value.trim()
         val contraseñaActual = _contraseña.value
         val claseActual = _clase.value
 
-        // Validaciones básicas
         if (nombreActual.isEmpty()) {
             _estadoRegistro.value = EstadoRegistro.Error("El nombre es obligatorio")
             return
@@ -94,48 +70,45 @@ class RegistroViewModel(
             return
         }
 
-        // Cambiar a estado cargando
         _estadoRegistro.value = EstadoRegistro.Cargando
 
-        // Ejecutar registro en corrutina
         viewModelScope.launch {
             try {
-                val idUsuario = usuarioRepository.registrarUsuario(
-                    nombre = nombreActual,
-                    correo = correoActual,
-                    contraseña = contraseñaActual,
-                    clase = claseActual
+                val request = RegisterRequest(
+                    name = nombreActual,
+                    email = correoActual,
+                    password = contraseñaActual,
+                    class_ = claseActual
                 )
 
-                if (idUsuario > 0) {
-                    // Registro exitoso
-                    sesionManager.guardarSesion(idUsuario.toInt(), nombreActual, correoActual, claseActual)
-                    _estadoRegistro.value = EstadoRegistro.Exitoso
+                val response = RetrofitClient.instance.register(request)
+
+                if (response.isSuccessful) {
+                    val body = response.body()
+                    if (body != null && !body.token.isNullOrEmpty()) {
+                        sesionManager.guardarToken(body.token)
+                        _estadoRegistro.value = EstadoRegistro.Exitoso
+                    } else {
+                        _estadoRegistro.value = EstadoRegistro.Error("Respuesta inválida del servidor")
+                    }
                 } else {
-                    // Error: correo ya existe
                     _estadoRegistro.value = EstadoRegistro.Error("El correo ya está registrado")
                 }
             } catch (e: Exception) {
-                // Error inesperado
-                _estadoRegistro.value = EstadoRegistro.Error("Error al crear cuenta. Inténtalo de nuevo.")
+                _estadoRegistro.value = EstadoRegistro.Error("Sin conexión a internet")
             }
         }
     }
 
-    /**
-     * Resetear estado (útil después de mostrar error)
-     */
     fun resetearEstado() {
         _estadoRegistro.value = EstadoRegistro.Idle
     }
 }
 
-/**
- * Estados posibles del proceso de registro
- */
 sealed class EstadoRegistro {
-    object Idle : EstadoRegistro()           // Estado inicial
-    object Cargando : EstadoRegistro()       // Creando cuenta
-    object Exitoso : EstadoRegistro()        // Registro exitoso
-    data class Error(val mensaje: String) : EstadoRegistro() // Error con mensaje
+    object Idle : EstadoRegistro()
+    object Cargando : EstadoRegistro()
+    object Exitoso : EstadoRegistro()
+    data class Error(val mensaje: String) : EstadoRegistro()
 }
+

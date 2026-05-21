@@ -4,15 +4,14 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.habitquest.database.UsuarioRepository
 import com.example.habitquest.manager.SesionManager
+import com.example.habitquest.network.RegisterRequest
+import com.example.habitquest.network.RetrofitClient
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
 /**
- * ViewModel para manejar la lógica del registro de usuario
- *
- * Gestiona la creación de cuenta, validaciones y navegación
- * después del registro exitoso.
+ * ViewModel para manejar el registro de usuario conectado a la API REST
  */
 class RegistroViewModel(
     private val usuarioRepository: UsuarioRepository,
@@ -33,39 +32,16 @@ class RegistroViewModel(
     private val _contraseña = MutableStateFlow("")
     val contraseña: StateFlow<String> = _contraseña
 
-    private val _clase = MutableStateFlow("Warrior")
+    private val _clase = MutableStateFlow("GUERRERO")
     val clase: StateFlow<String> = _clase
 
-    /**
-     * Actualizar nombre
-     */
-    fun actualizarNombre(nuevoNombre: String) {
-        _nombre.value = nuevoNombre
-    }
+    fun actualizarNombre(nuevoNombre: String) { _nombre.value = nuevoNombre }
+    fun actualizarCorreo(nuevoCorreo: String) { _correo.value = nuevoCorreo }
+    fun actualizarContraseña(nuevaContraseña: String) { _contraseña.value = nuevaContraseña }
+    fun actualizarClase(nuevaClase: String) { _clase.value = nuevaClase }
 
     /**
-     * Actualizar correo
-     */
-    fun actualizarCorreo(nuevoCorreo: String) {
-        _correo.value = nuevoCorreo
-    }
-
-    /**
-     * Actualizar contraseña
-     */
-    fun actualizarContraseña(nuevaContraseña: String) {
-        _contraseña.value = nuevaContraseña
-    }
-
-    /**
-     * Actualizar clase
-     */
-    fun actualizarClase(nuevaClase: String) {
-        _clase.value = nuevaClase
-    }
-
-    /**
-     * Intentar registrar usuario
+     * Registra al usuario en la API y sincroniza con Room
      */
     fun registrarUsuario() {
         val nombreActual = _nombre.value.trim()
@@ -74,70 +50,85 @@ class RegistroViewModel(
         val claseActual = _clase.value
 
         // Validaciones básicas
-        if (nombreActual.isEmpty()) {
-            _estadoRegistro.value = EstadoRegistro.Error("El nombre es obligatorio")
-            return
-        }
-
-        if (correoActual.isEmpty()) {
-            _estadoRegistro.value = EstadoRegistro.Error("El correo es obligatorio")
+        if (nombreActual.isEmpty() || correoActual.isEmpty() || contraseñaActual.isEmpty()) {
+            _estadoRegistro.value = EstadoRegistro.Error("Todos los campos son obligatorios")
             return
         }
 
         if (!correoActual.contains("@")) {
-            _estadoRegistro.value = EstadoRegistro.Error("El correo debe ser válido")
+            _estadoRegistro.value = EstadoRegistro.Error("Correo inválido")
             return
         }
 
-        if (contraseñaActual.length < 6) {
-            _estadoRegistro.value = EstadoRegistro.Error("La contraseña debe tener al menos 6 caracteres")
-            return
-        }
-
-        // Cambiar a estado cargando
         _estadoRegistro.value = EstadoRegistro.Cargando
 
-        // Ejecutar registro en corrutina
         viewModelScope.launch {
             try {
-                val idUsuario = usuarioRepository.registrarUsuario(
-                    nombre = nombreActual,
-                    correo = correoActual,
-                    contraseña = contraseñaActual,
-                    clase = claseActual
+                // 1. Llamada a la API
+                val registerRequest = RegisterRequest(
+                    name = nombreActual,
+                    email = correoActual,
+                    password = contraseñaActual,
+                    playerClass = claseActual.uppercase()
                 )
 
-                if (idUsuario > 0) {
-                    // Registro exitoso
-                    sesionManager.guardarSesion(idUsuario.toInt(), nombreActual, correoActual, claseActual)
+                val response = RetrofitClient.instance.register(registerRequest)
+
+                if (response.isSuccessful && response.body() != null) {
+                    val authData = response.body()!!
+
+                    // 2. Guardar Token y ID de API
+                    sesionManager.guardarToken(authData.token)
+                    sesionManager.guardarUsuarioApiId(authData.user.id)
+
+                    // 3. Persistencia local en Room (Fallback)
+                    val idLocal = usuarioRepository.registrarUsuario(
+                        nombre = nombreActual,
+                        correo = correoActual,
+                        contraseña = contraseñaActual,
+                        clase = claseActual
+                    )
+
+                    // 4. Establecer sesión activa
+                    sesionManager.guardarSesion(
+                        usuarioId = if (idLocal > 0) idLocal.toInt() else authData.user.id,
+                        nombre = authData.user.name,
+                        correo = authData.user.email,
+                        clase = authData.user.playerClass ?: claseActual
+                    )
+
                     _estadoRegistro.value = EstadoRegistro.Exitoso
                 } else {
-                    // Error: correo ya existe
-                    _estadoRegistro.value = EstadoRegistro.Error("El correo ya está registrado")
+                    val errorMsg = if (response.code() == 400) "El correo ya existe" else "Error: ${response.code()}"
+                    _estadoRegistro.value = EstadoRegistro.Error(errorMsg)
                 }
             } catch (e: Exception) {
-                // ESTO TE DIRÁ EL ERROR REAL EN PANTALLA
-                _estadoRegistro.value = EstadoRegistro.Error("Error: ${e.localizedMessage}")
-                // Y esto lo imprimirá en el Logcat de Android Studio
-                e.printStackTrace()
+                // Si falla la red, intentamos registro puramente local
+                intentarRegistroLocal(nombreActual, correoActual, contraseñaActual, claseActual)
             }
         }
     }
 
-    /**
-     * Resetear estado (útil después de mostrar error)
-     */
-    fun resetearEstado() {
-        _estadoRegistro.value = EstadoRegistro.Idle
+    private suspend fun intentarRegistroLocal(nom: String, cor: String, con: String, cla: String) {
+        try {
+            val id = usuarioRepository.registrarUsuario(nom, cor, con, cla)
+            if (id > 0) {
+                sesionManager.guardarSesion(id.toInt(), nom, cor, cla)
+                _estadoRegistro.value = EstadoRegistro.Exitoso
+            } else {
+                _estadoRegistro.value = EstadoRegistro.Error("El correo ya existe localmente")
+            }
+        } catch (e: Exception) {
+            _estadoRegistro.value = EstadoRegistro.Error("Error de conexión al servidor")
+        }
     }
+
+    fun resetearEstado() { _estadoRegistro.value = EstadoRegistro.Idle }
 }
 
-/**
- * Estados posibles del proceso de registro
- */
 sealed class EstadoRegistro {
-    object Idle : EstadoRegistro()           // Estado inicial
-    object Cargando : EstadoRegistro()       // Creando cuenta
-    object Exitoso : EstadoRegistro()        // Registro exitoso
-    data class Error(val mensaje: String) : EstadoRegistro() // Error con mensaje
+    object Idle : EstadoRegistro()
+    object Cargando : EstadoRegistro()
+    object Exitoso : EstadoRegistro()
+    data class Error(val mensaje: String) : EstadoRegistro()
 }

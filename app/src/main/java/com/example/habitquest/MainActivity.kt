@@ -4,44 +4,27 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import com.example.habitquest.database.HabitDatabase
+import com.example.habitquest.database.UsuarioRepository
+import com.example.habitquest.manager.SesionManager
+import com.example.habitquest.navigation.AppNavigation
 import com.example.habitquest.ui.theme.HabitQuestTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        androidx.core.view.WindowCompat.setDecorFitsSystemWindows(window, false)
         enableEdgeToEdge()
         setContent {
             HabitQuestTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
-                }
+                val sesionManager = SesionManager(this@MainActivity)
+                val database = HabitDatabase.getDatabase(this@MainActivity)
+                val usuarioRepository = UsuarioRepository(database.usuarioDao())
+                AppNavigation(
+                    sesionManager = sesionManager,
+                    usuarioRepository = usuarioRepository
+                )
             }
         }
-    }
-}
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    HabitQuestTheme {
-        Greeting("Android")
     }
 }

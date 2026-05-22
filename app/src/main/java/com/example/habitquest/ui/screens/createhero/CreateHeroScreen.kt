@@ -316,26 +316,26 @@ fun CreateHeroScreen(
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             ClassCard(
-                name = "Warrior",
+                name = "Guerrero",
                 icon = "⚔️",
-                isSelected = clase.value == "Warrior",
-                onClick = { viewModel.actualizarClase("Warrior") },
+                isSelected = clase.value == "GUERRERO",
+                onClick = { viewModel.actualizarClase("GUERRERO") },
                 modifier = Modifier.weight(1f)
             )
 
             ClassCard(
-                name = "Mage",
+                name = "Mago",
                 icon = "🔮",
-                isSelected = clase.value == "Mage",
-                onClick = { viewModel.actualizarClase("Mage") },
+                isSelected = clase.value == "MAGO",
+                onClick = { viewModel.actualizarClase("MAGO") },
                 modifier = Modifier.weight(1f)
             )
 
             ClassCard(
-                name = "Sage",
-                icon = "📖",
-                isSelected = clase.value == "Sage",
-                onClick = { viewModel.actualizarClase("Sage") },
+                name = "Pícaro",
+                icon = "🗡️",
+                isSelected = clase.value == "PICARO",
+                onClick = { viewModel.actualizarClase("PICARO") },
                 modifier = Modifier.weight(1f)
             )
         }

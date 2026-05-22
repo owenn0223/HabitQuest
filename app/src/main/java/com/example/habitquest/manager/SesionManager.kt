@@ -9,6 +9,8 @@ class SesionManager(context: Context) {
         context.getSharedPreferences(NOMBRE_ARCHIVO, Context.MODE_PRIVATE)
 
     companion object {
+        private const val CLAVE_XP = "usuario_xp"
+        private const val CLAVE_NIVEL = "usuario_nivel"
         private const val NOMBRE_ARCHIVO = "habitquest_sesion"
         private const val CLAVE_USUARIO_ID = "usuario_id"
         private const val CLAVE_NOMBRE_USUARIO = "nombre_usuario"
@@ -29,6 +31,18 @@ class SesionManager(context: Context) {
             apply()
         }
     }
+
+    fun guardarXP(xp: Int) {
+        sharedPreferences.edit().putInt(CLAVE_XP, xp).apply()
+    }
+
+    fun obtenerXP(): Int = sharedPreferences.getInt(CLAVE_XP, 0)
+
+    fun guardarNivel(nivel: Int) {
+        sharedPreferences.edit().putInt(CLAVE_NIVEL, nivel).apply()
+    }
+
+    fun obtenerNivel(): Int = sharedPreferences.getInt(CLAVE_NIVEL, 1)
 
     fun obtenerUsuarioId(): Int = sharedPreferences.getInt(CLAVE_USUARIO_ID, -1)
     fun obtenerNombreUsuario(): String? = sharedPreferences.getString(CLAVE_NOMBRE_USUARIO, null)

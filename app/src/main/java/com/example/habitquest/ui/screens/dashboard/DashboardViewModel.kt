@@ -148,20 +148,44 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
     /**
      * Marcar el Current Quest como completado
      */
+    private fun actualizarXPUI(xpTotal: Int) {
+        _totalXP.value = xpTotal
+        val nivelInfo = calcularNivel(xpTotal)
+        _level.value = nivelInfo.nivel
+        _xpInLevel.value = nivelInfo.xpEnNivel
+        _xpForNextLevel.value = nivelInfo.xpParaSiguiente
+        _xpProgress.value = nivelInfo.porcentaje
+        // Guardar en sesión para persistir
+        sesionManager.guardarXP(xpTotal)
+        sesionManager.guardarNivel(nivelInfo.nivel)
+    }
+
     fun completeCurrentQuest() {
         viewModelScope.launch {
             val quest = _currentQuest.value ?: return@launch
             val today = getCurrentDate()
-            val updated = quest.copy(
+
+            // XP según frecuencia
+            val xpGanado = when (quest.frecuencia.uppercase()) {
+                "WEEKLY"  -> quest.xp * 2
+                "MONTHLY" -> quest.xp * 4
+                else      -> quest.xp
+            }
+
+            // Marcar hábito completado
+            habitDao.updateHabit(quest.copy(
                 completado = true,
                 ultimaVezCompletado = today
-            )
-            habitDao.updateHabit(updated)
+            ))
 
-            // Agregar XP al usuario
+            // Calcular nuevo XP y actualizar UI inmediatamente
+            val xpNuevo = _totalXP.value + xpGanado
+            actualizarXPUI(xpNuevo)
+
+            // Guardar en Room
             val usuario = usuarioDao.getFirstUsuario()
             if (usuario != null) {
-                usuarioDao.sumarXPTotal(usuario.id, quest.xp)
+                usuarioDao.sumarXPTotal(usuario.id, xpGanado)
             }
         }
     }
@@ -197,13 +221,16 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
     )
 
     private fun loadUserData() {
-        viewModelScope.launch {
-            usuarioDao.getFirstUsuarioFlow().collectLatest { usuario ->
-                usuario?.let {
-                    _userName.value = it.nombre
-                    _userClass.value = it.clase
-                }
-            }
-        }
+        _userName.value = sesionManager.obtenerNombreUsuario() ?: "Hero"
+        _userClass.value = sesionManager.obtenerClase() ?: "GUERRERO"
+
+        // Cargar XP inicial desde sesión
+        val xpInicial = sesionManager.obtenerXP()
+        _totalXP.value = xpInicial
+        val nivelInfo = calcularNivel(xpInicial)
+        _level.value = nivelInfo.nivel
+        _xpInLevel.value = nivelInfo.xpEnNivel
+        _xpForNextLevel.value = nivelInfo.xpParaSiguiente
+        _xpProgress.value = nivelInfo.porcentaje
     }
 }

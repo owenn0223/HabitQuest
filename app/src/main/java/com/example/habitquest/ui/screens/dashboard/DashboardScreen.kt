@@ -31,7 +31,8 @@ fun DashboardScreen(
     onCreateHabitClick: () -> Unit = {},
     onHabitsListClick: () -> Unit = {},
     onAchievementsClick: () -> Unit = {},
-    onProfileClick: () -> Unit = {}
+    onProfileClick: () -> Unit = {},
+    onStatisticsClick: () -> Unit = {}  // ← NUEVO
 ) {
     // ✅ ViewModel conectado a Room
     val viewModel: DashboardViewModel = viewModel()
@@ -107,10 +108,10 @@ fun DashboardScreen(
                 ) {
                     Text(
                         text = when (userClass.uppercase()) {
-                            "WARRIOR" -> "⚔️"
-                            "MAGE" -> "🔮"
-                            "SAGE" -> "📚"
-                            "ADVENTURER" -> "🗺️"
+                            "GUERRERO" -> "⚔️"
+                            "MAGO" -> "🔮"
+                            "PICARO" -> "🗡️"
+                            "ARQUERO" -> "🏹"
                             else -> "🛡️"
                         },
                         fontSize = 28.sp
@@ -421,7 +422,7 @@ fun DashboardScreen(
                     Text("+", fontSize = 32.sp, color = Color(0xFF1a3a2a), fontWeight = FontWeight.Bold)
                 }
             }
-            IconButton(onClick = { /* TODO: Items */ }) {
+            IconButton(onClick = { onStatisticsClick() }) {
                 Text("🎒", fontSize = 26.sp)
             }
             IconButton(onClick = { onProfileClick() }) {

@@ -21,6 +21,9 @@ interface HabitDao {
     @Query("SELECT * FROM habit ORDER BY fechaCreacion DESC")
     fun getAllHabits(): Flow<List<Habit>>
 
+    @Query("SELECT * FROM habit ORDER BY fechaCreacion DESC")
+    suspend fun getAllHabitsOnce(): List<Habit>
+
     @Query("SELECT * FROM habit WHERE frecuencia = :frecuencia ORDER BY fechaCreacion DESC")
     fun getHabitsByFrecuencia(frecuencia: String): Flow<List<Habit>>
 

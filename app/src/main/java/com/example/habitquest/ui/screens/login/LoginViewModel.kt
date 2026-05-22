@@ -35,14 +35,30 @@ class LoginViewModel(
 
                 if (response.isSuccessful) {
                     val body = response.body()
-                    if (body != null && !body.token.isNullOrEmpty()) {
-                        sesionManager.guardarToken(body.token)
+                    if (body != null && body.data.token.isNotEmpty()) {
+                        // Guardar token
+                        sesionManager.guardarToken(body.data.token)
+
+                        // ← NUEVO: Guardar datos del usuario en sesión
+                        val user = body.data.user
+                        sesionManager.guardarSesion(
+                            usuarioId = user.id,
+                            nombre = user.name,
+                            correo = user.email,
+                            clase = user.playerClass ?: "GUERRERO"
+                        )
+                        sesionManager.guardarUsuarioApiId(user.id)
+
+                        // ← NUEVO: Guardar XP del usuario
+                        sesionManager.guardarXP(user.xp)
+                        sesionManager.guardarNivel(user.level)
+
                         _loginSuccess.value = true
                     } else {
                         _error.value = "Respuesta inválida del servidor"
                     }
                 } else {
-                    _error.value = "Error: ${response.code()} - ${response.message()}"
+                    _error.value = "Correo o contraseña incorrectos"
                 }
             } catch (e: Exception) {
                 _error.value = "Sin conexión a internet"
@@ -57,4 +73,3 @@ class LoginViewModel(
         _error.value = null
     }
 }
-

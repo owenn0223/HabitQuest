@@ -4,6 +4,8 @@ import com.google.gson.annotations.SerializedName
 
 // ─── AUTH ─────────────────────────────────────────────────────────
 
+// ─── AUTH ─────────────────────────────────────────────────────────
+
 data class LoginRequest(
     val email: String,
     val password: String
@@ -17,8 +19,14 @@ data class RegisterRequest(
 )
 
 data class AuthResponse(
-    val token: String,
-    val user: ApiUser
+    val success: Boolean,
+    val message: String,
+    val data: AuthData
+)
+
+data class AuthData(
+    val user: ApiUser,
+    val token: String
 )
 
 // ─── USUARIO ──────────────────────────────────────────────────────

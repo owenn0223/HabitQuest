@@ -25,24 +25,13 @@ class RegistroViewModel(
     private val _contraseña = MutableStateFlow("")
     val contraseña: StateFlow<String> = _contraseña
 
-    private val _clase = MutableStateFlow("Warrior")
+    private val _clase = MutableStateFlow("GUERRERO")
     val clase: StateFlow<String> = _clase
 
-    fun actualizarNombre(nuevoNombre: String) {
-        _nombre.value = nuevoNombre
-    }
-
-    fun actualizarCorreo(nuevoCorreo: String) {
-        _correo.value = nuevoCorreo
-    }
-
-    fun actualizarContraseña(nuevaContraseña: String) {
-        _contraseña.value = nuevaContraseña
-    }
-
-    fun actualizarClase(nuevaClase: String) {
-        _clase.value = nuevaClase
-    }
+    fun actualizarNombre(nuevoNombre: String) { _nombre.value = nuevoNombre }
+    fun actualizarCorreo(nuevoCorreo: String) { _correo.value = nuevoCorreo }
+    fun actualizarContraseña(nuevaContraseña: String) { _contraseña.value = nuevaContraseña }
+    fun actualizarClase(nuevaClase: String) { _clase.value = nuevaClase }
 
     fun registrarUsuario() {
         val nombreActual = _nombre.value.trim()
@@ -54,17 +43,14 @@ class RegistroViewModel(
             _estadoRegistro.value = EstadoRegistro.Error("El nombre es obligatorio")
             return
         }
-
         if (correoActual.isEmpty()) {
             _estadoRegistro.value = EstadoRegistro.Error("El correo es obligatorio")
             return
         }
-
         if (!correoActual.contains("@")) {
             _estadoRegistro.value = EstadoRegistro.Error("El correo debe ser válido")
             return
         }
-
         if (contraseñaActual.length < 6) {
             _estadoRegistro.value = EstadoRegistro.Error("La contraseña debe tener al menos 6 caracteres")
             return
@@ -78,15 +64,15 @@ class RegistroViewModel(
                     name = nombreActual,
                     email = correoActual,
                     password = contraseñaActual,
-                    class_ = claseActual
+                    playerClass = claseActual
                 )
 
                 val response = RetrofitClient.instance.register(request)
 
                 if (response.isSuccessful) {
                     val body = response.body()
-                    if (body != null && !body.token.isNullOrEmpty()) {
-                        sesionManager.guardarToken(body.token)
+                    if (body != null && body.data.token.isNotEmpty()) {
+                        sesionManager.guardarToken(body.data.token)
                         _estadoRegistro.value = EstadoRegistro.Exitoso
                     } else {
                         _estadoRegistro.value = EstadoRegistro.Error("Respuesta inválida del servidor")
@@ -111,4 +97,3 @@ sealed class EstadoRegistro {
     object Exitoso : EstadoRegistro()
     data class Error(val mensaje: String) : EstadoRegistro()
 }
-

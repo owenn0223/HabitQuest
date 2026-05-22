@@ -21,16 +21,8 @@ import com.example.habitquest.ui.screens.statistics.StatisticsScreen
 import com.example.habitquest.ui.screens.welcome.WelcomeScreen
 
 enum class Screen {
-    SPLASH,
-    WELCOME,
-    CREATE_HERO,
-    LOGIN,
-    DASHBOARD,
-    CREATE_HABIT,
-    HABITS_LIST,
-    ACHIEVEMENTS,
-    PROFILE,
-    STATISTICS
+    SPLASH, WELCOME, CREATE_HERO, LOGIN, DASHBOARD,
+    CREATE_HABIT, HABITS_LIST, ACHIEVEMENTS, PROFILE, STATISTICS
 }
 
 @Composable
@@ -55,7 +47,8 @@ fun AppNavigation(sesionManager: SesionManager, usuarioRepository: UsuarioReposi
             onLoginClick = { currentScreen.value = Screen.LOGIN }
         )
         Screen.CREATE_HERO -> {
-            val registroViewModel = RegistroViewModel(usuarioRepository, sesionManager)
+            // RegistroViewModel de Owen solo recibe sesionManager
+            val registroViewModel = RegistroViewModel(sesionManager)
             CreateHeroScreen(
                 viewModel = registroViewModel,
                 onBackClick = { currentScreen.value = Screen.WELCOME },
@@ -76,7 +69,8 @@ fun AppNavigation(sesionManager: SesionManager, usuarioRepository: UsuarioReposi
             onCreateHabitClick = { currentScreen.value = Screen.CREATE_HABIT },
             onHabitsListClick = { currentScreen.value = Screen.HABITS_LIST },
             onAchievementsClick = { currentScreen.value = Screen.ACHIEVEMENTS },
-            onProfileClick = { currentScreen.value = Screen.PROFILE }
+            onProfileClick = { currentScreen.value = Screen.PROFILE },
+            onStatisticsClick = { currentScreen.value = Screen.STATISTICS }  // ← NUEVO
         )
         Screen.CREATE_HABIT -> CreateHabitScreen(
             onBack = { currentScreen.value = Screen.DASHBOARD }
